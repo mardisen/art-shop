@@ -1,10 +1,14 @@
+from utils import test_data
+from contextlib import asynccontextmanager
+from sqlalchemy import event
 from fastapi import Depends
 from typing import Annotated
 from sqlmodel import Session
 from sqlmodel import SQLModel
 from utils import create_db_connection_string
-from models.user import *
-from models.workshop import *
+from models.user import User
+from models.workshop import Workshop
+from models.bookmark import Bookmark
 from sqlalchemy import create_engine
 from fastapi import FastAPI
 
@@ -20,15 +24,17 @@ def get_db_session():
         yield session
 
 
+
 SessionDep = Annotated[Session, Depends(get_db_session)]
 
 
-app = FastAPI()
-
-
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     create_db_and_tables()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
