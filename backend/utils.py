@@ -1,7 +1,12 @@
+from pwdlib import PasswordHash
 from models.workshop import Workshop
 from models.user import User
+from passlib.context import CryptContext
 from dotenv import load_dotenv
 from os import getenv
+
+
+pwd_context = PasswordHash.recommended()
 
 
 def create_db_connection_string():
@@ -15,7 +20,11 @@ def create_db_connection_string():
 
 
 def hash_password(password: str):
-    return password
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 test_data = {
@@ -24,13 +33,13 @@ test_data = {
             username="superuser",
             name="superuser",
             email="superuser@example.com",
-            password=hash_password("123"),
+            password=hash_password("123123123"),
         ),
         User(
             username="admin",
             name="admin",
             email="admin@example.com",
-            password=hash_password("123"),
+            password=hash_password("adminadmin"),
         ),
     ],
     "workshops": [

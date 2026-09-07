@@ -1,3 +1,4 @@
+from sqlmodel import UniqueConstraint
 from models.bookmark import Bookmark
 from sqlmodel import Relationship
 from sqlmodel import Field
@@ -13,4 +14,8 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: int | None = Field(primary_key=True, default=None)
     password: str = Field(nullable=False)
-    bookmarked_workshops: list["Workshop"] = Relationship(back_populates="bookmarked_users", link_model=Bookmark)
+    bookmarked_workshops: list["Workshop"] = Relationship(
+        back_populates="bookmarked_users", link_model=Bookmark
+    )
+
+    __table_args__ = (UniqueConstraint("email", name="email_constraint"),)

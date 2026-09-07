@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from utils import test_data
 from utils import create_db_connection_string
 import typer
@@ -14,8 +15,11 @@ def seed_db():
     with Session(engine) as session:
         for key, values in test_data.items():
             for value in values:
-                session.add(value)
-                session.commit()
+                try:
+                    session.add(value)
+                    session.commit()
+                except IntegrityError:
+                    session.rollback()
 
 
 @app.command()

@@ -1,0 +1,14 @@
+from sqlmodel import Session, SQLModel
+from sqlalchemy import create_engine
+from utils import create_db_connection_string
+
+engine = create_engine(create_db_connection_string())
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def get_db_session():
+    with Session(engine) as session:
+        yield session

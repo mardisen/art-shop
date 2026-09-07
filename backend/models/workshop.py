@@ -6,8 +6,7 @@ from sqlmodel import Field
 from sqlmodel import SQLModel
 
 
-class Workshop(SQLModel, table=True):
-    id: int | None = Field(primary_key=True, default=None)
+class WorkshopBase(SQLModel):
     latitude: Longitude = Field()
     longitude: Latitude = Field()
     address: str = Field()
@@ -15,4 +14,10 @@ class Workshop(SQLModel, table=True):
     description: str = Field()
     link: str | None = Field(default=None)
 
-    bookmarked_users: list["User"] = Relationship(back_populates="bookmarked_workshops", link_model=Bookmark)
+
+class Workshop(WorkshopBase, table=True):
+    id: int | None = Field(primary_key=True, default=None)
+
+    bookmarked_users: list["User"] = Relationship(
+        back_populates="bookmarked_workshops", link_model=Bookmark
+    )

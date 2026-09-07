@@ -1,29 +1,16 @@
-from utils import test_data
+from sqlmodel import select
+from fastapi import HTTPException
+from models.workshop import WorkshopBase
 from contextlib import asynccontextmanager
-from sqlalchemy import event
 from fastapi import Depends
 from typing import Annotated
 from sqlmodel import Session
-from sqlmodel import SQLModel
-from utils import create_db_connection_string
 from models.user import User
 from models.workshop import Workshop
 from models.bookmark import Bookmark
-from sqlalchemy import create_engine
 from fastapi import FastAPI
-
-engine = create_engine(create_db_connection_string())
-
-
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-
-
-def get_db_session():
-    with Session(engine) as session:
-        yield session
-
-
+from database import create_db_and_tables, get_db_session
+from auth import router as auth_router
 
 SessionDep = Annotated[Session, Depends(get_db_session)]
 
@@ -35,6 +22,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(auth_router)
 
 
 @app.get("/")
@@ -42,6 +30,32 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
+@app.post("/workshop/")
+def create_workshop(workshop: WorkshopBase, session: SessionDep):
+    db_workshop = Workshop.model_validate(workshop)
+    session.add(db_workshop)
+    session.commit()
+    session.refresh(db_workshop)
+    return db_workshop
+
+
+@app.get("/workshop/{id}")
+def get_workshop(id: int, session: SessionDep):
+    workshop = session.get(Workshop, id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+    return workshop
+
+
+@app.get("/workshop/")
+def get_workshops(session: SessionDep):
+    workshops = session.exec(select(Workshop)).all()
+    return workshops
+
+
+@app.delete("/workshop/{id}")
+def delete_workshop(id: int, session: SessionDep):
+    workshop = session.get(Workshop, id)
+    session.delete(workshop)
+    session.commit()
+    return {"ok": True}
