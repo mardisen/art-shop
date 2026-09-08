@@ -1,13 +1,15 @@
+from database import SessionDep
+from models.user import UserCreate
+from models.user import UserBase
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from pydantic import BaseModel, EmailStr
-from sqlmodel import Session, select
+from pydantic import BaseModel
+from sqlmodel import select
 
-from database import get_db_session
 from models.user import User
 from utils import hash_password, verify_password
 
@@ -16,9 +18,9 @@ from os import getenv
 
 load_dotenv()
 
-SECRET_KEY = getenv("SECRET_KEY")
-ALGORITHM = getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+SECRET_KEY = getenv("SECRET_KEY") or ""
+ALGORITHM = getenv("ALGORITHM") or ""
+ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or 0)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -27,20 +29,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 class Token(BaseModel):
     access_token: str
     token_type: str
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    username: str
-    name: str
-    password: str
-
-
-class UserResponse(BaseModel):
-    id: int
-    email: str
-    username: str
-    name: str
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -53,7 +41,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_db_session)
+    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,10 +62,12 @@ def get_current_user(
     return user
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, session: Session = Depends(get_db_session)):
+@router.post("/register", response_model=UserBase, status_code=status.HTTP_201_CREATED)
+def register(user_data: UserCreate, session: SessionDep):
     existing = session.exec(
-        select(User).where((User.email == user_data.email) | (User.username == user_data.username))
+        select(User).where(
+            (User.email == user_data.email) | (User.username == user_data.username)
+        )
     ).first()
     if existing:
         raise HTTPException(
@@ -100,7 +90,7 @@ def register(user_data: UserCreate, session: Session = Depends(get_db_session)):
 @router.post("/login", response_model=Token)
 def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Session = Depends(get_db_session),
+    session: SessionDep,
 ):
     user = session.exec(select(User).where(User.username == form_data.username)).first()
     if not user or not verify_password(form_data.password, user.password):
@@ -114,6 +104,6 @@ def login(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserBase)
 def get_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user

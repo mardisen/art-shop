@@ -1,3 +1,5 @@
+from pydantic import EmailStr
+from pydantic import BaseModel
 from sqlmodel import UniqueConstraint
 from models.bookmark import Bookmark
 from sqlmodel import Relationship
@@ -19,3 +21,11 @@ class User(UserBase, table=True):
     )
 
     __table_args__ = (UniqueConstraint("email", name="email_constraint"),)
+    __table_args__ = (UniqueConstraint("username", name="username_constraint"),)
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    name: str
+    password: str
