@@ -11,6 +11,7 @@ from models.bookmark import Bookmark
 from fastapi import FastAPI
 from database import create_db_and_tables, get_db_session
 from auth import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
 
 SessionDep = Annotated[Session, Depends(get_db_session)]
 
@@ -24,6 +25,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
 
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
