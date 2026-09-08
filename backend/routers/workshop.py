@@ -35,6 +35,8 @@ def get_workshops(session: SessionDep):
 @router.delete("/{id}")
 def delete_workshop(id: int, session: SessionDep):
     workshop = session.get(Workshop, id)
+    if not workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
     session.delete(workshop)
     session.commit()
     return {"ok": True}
