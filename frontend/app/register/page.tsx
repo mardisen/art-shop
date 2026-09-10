@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "../../lib/auth";
+import { FormField } from "../../components/FormField";
+import { Button } from "../../components/Button";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -44,47 +46,13 @@ export default function RegisterPage() {
                         {error}
                     </p>
                 )}
-                <label className="block">
-                    <span className="block text-sm font-medium">Name</span>
-                    <input
-                        name="name"
-                        required
-                        className="input"
-                    />
-                </label>
-                <label className="block">
-                    <span className="block text-sm font-medium">Username</span>
-                    <input
-                        name="username"
-                        required
-                        className="input"
-                    />
-                </label>
-                <label className="block">
-                    <span className="block text-sm font-medium">Email</span>
-                    <input
-                        name="email"
-                        type="email"
-                        required
-                        className="input"
-                    />
-                </label>
-                <label className="block">
-                    <span className="block text-sm font-medium">Password</span>
-                    <input
-                        name="password"
-                        type="password"
-                        required
-                        className="input"
-                    />
-                </label>
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="mt-1 w-full rounded bg-zinc-900 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
-                >
-                    {loading ? "Registering..." : "Register"}
-                </button>
+                <FormField label="Name" name="name" />
+                <FormField label="Username" name="username" />
+                <FormField label="Email" name="email" type="email" />
+                <FormField label="Password" name="password" type="password" />
+                <Button type="submit" loading={loading} loadingText="Registering">
+                    Register
+                </Button>
                 <p className="text-center text-sm text-zinc-500">
                     Already have an account?{" "}
                     <Link href="/login" className="text-underline underline">

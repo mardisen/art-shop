@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_URL, setToken } from "../../lib/auth";
+import { FormField } from "../../components/FormField";
+import { Button } from "../../components/Button";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -50,30 +52,11 @@ export default function LoginPage() {
                         {error}
                     </p>
                 )}
-                <label className="block">
-                    <span className="block text-sm font-medium">Username</span>
-                    <input
-                        name="username"
-                        required
-                        className="input"
-                    />
-                </label>
-                <label className="block">
-                    <span className="block text-sm font-medium">Password</span>
-                    <input
-                        name="password"
-                        type="password"
-                        required
-                        className="input"
-                    />
-                </label>
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="mt-1 w-full rounded bg-zinc-900 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
-                >
-                    {loading ? "Logging in..." : "Log in"}
-                </button>
+                <FormField label="Username" name="username" />
+                <FormField label="Password" name="password" type="password" />
+                <Button type="submit" loading={loading} loadingText="Logging in">
+                    Log in
+                </Button>
                 <p className="text-center text-sm text-zinc-500">
                     No account?{" "}
                     <Link href="/register" className="underline">
