@@ -1,6 +1,7 @@
 services:
     db:
         image: postgres
+        container_name: art-shop-postgres
         restart: always
         shm_size: 128mb
         environment:
@@ -9,9 +10,28 @@ services:
             POSTGRES_DB: fastapi
         ports:
             - 5432:5432
+        networks:
+            - backend
 
     adminer:
         image: adminer
         restart: always
         ports:
             - 8080:8080
+    
+    backend:
+        image: artshop/backend
+        depends_on:
+            - db
+        build:
+            context: backend
+            dockerfile: ./Dockerfile
+        ports:
+            - 8000:80
+        networks:
+            - backend
+
+
+networks:
+    backend:
+        driver: bridge
