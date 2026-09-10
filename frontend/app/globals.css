@@ -12,12 +12,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 body {
   background: var(--background);
@@ -26,5 +28,5 @@ body {
 }
 
 .input {
-    @apply mt-1 w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800;
+    @apply mt-1 w-full rounded border border-zinc-300 px-3 py-2 dark:bg-zinc-800;
 }

@@ -48,7 +48,7 @@ export default function LoginPage() {
             >
                 <h1 className="text-2xl font-semibold">Log in</h1>
                 {error && (
-                    <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
+                    <p className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
                         {error}
                     </p>
                 )}
