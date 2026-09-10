@@ -55,7 +55,7 @@ export default function LoginPage() {
                     <input
                         name="username"
                         required
-                        className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                        className="input"
                     />
                 </label>
                 <label className="block">
@@ -64,13 +64,13 @@ export default function LoginPage() {
                         name="password"
                         type="password"
                         required
-                        className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800"
+                        className="input"
                     />
                 </label>
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full rounded bg-zinc-900 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
+                    className="mt-1 w-full rounded bg-zinc-900 py-2 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
                 >
                     {loading ? "Logging in..." : "Log in"}
                 </button>
