@@ -7,8 +7,8 @@ export function Navbar() {
                 <Link href="/" className="text-lg font-semibold px-3 py-1.5">
                     Art Shop
                 </Link>
-                <Link href="/gallery" className="rounded px-3 py-1.5 text-sm font-medium">
-                    Gallery
+                <Link href="/workshops" className="rounded px-3 py-1.5 text-sm font-medium">
+                    Workshops
                 </Link>
             </div>
             <div className="flex items-center gap-3">
@@ -16,7 +16,7 @@ export function Navbar() {
                     href="/login"
                     className="rounded px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
-                    Log in
+                    Login
                 </Link>
                 <Link
                     href="/register"
