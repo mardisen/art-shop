@@ -9,23 +9,32 @@ from sqlmodel import SQLModel
 
 class UserBase(SQLModel):
     email: str = Field(index=True)
-    username: str = Field()
     name: str = Field()
 
 
-class User(UserBase, table=True):
+class User(UserBase):
     id: int | None = Field(primary_key=True, default=None)
     password: str = Field(nullable=False)
+
+
+class Artist(User, table=True):
+    surname: str = Field()
     bookmarked_workshops: list["Workshop"] = Relationship(
-        back_populates="bookmarked_users", link_model=Bookmark
+        back_populates="bookmarked_artists", link_model=Bookmark
     )
 
-    __table_args__ = (UniqueConstraint("email", name="email_constraint"),)
-    __table_args__ = (UniqueConstraint("username", name="username_constraint"),)
+    __table_args__ = (UniqueConstraint("email", name="artist_email_constraint"),)
+
+
+class Istitute(User, table=True):
+    address: str = Field()
+    link: str | None = Field(default=None)
+    description: str | None = Field(default=None)
+
+    __table_args__ = (UniqueConstraint("email", name="institute_email_constraint"),)
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    username: str
     name: str
     password: str

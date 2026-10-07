@@ -6,6 +6,7 @@ from sqlmodel import Field
 from sqlmodel import SQLModel
 
 
+
 class WorkshopBase(SQLModel):
     latitude: Longitude = Field()
     longitude: Latitude = Field()
@@ -18,6 +19,6 @@ class WorkshopBase(SQLModel):
 class Workshop(WorkshopBase, table=True):
     id: int | None = Field(primary_key=True, default=None)
 
-    bookmarked_users: list["User"] = Relationship(
+    bookmarked_artists: list["Artist"] = Relationship(
         back_populates="bookmarked_workshops", link_model=Bookmark
     )
