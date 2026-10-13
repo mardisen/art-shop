@@ -12,6 +12,11 @@ services:
       - 5432:5432
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U example -d fastapi"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
 
   adminer:
     image: adminer
@@ -20,11 +25,32 @@ services:
       - 8080:8080
     networks:
       - backend
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: example@example.com
+      PGADMIN_DEFAULT_PASSWORD: example
+      # Don't require the user to login
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+
+      # Don't require a "master" password after logging in
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    networks:
+      - backend
+
   
   db_seed:
     image: artshop/backend
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     restart: "no"
     entrypoint: [ "python", "app/cli.py" ]
     build:
@@ -36,7 +62,8 @@ services:
   backend:
     image: artshop/backend
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     build:
       context: backend
       dockerfile: ./Dockerfile

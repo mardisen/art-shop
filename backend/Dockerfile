@@ -16,3 +16,5 @@ COPY .docker.env /code/app/.env
 
 
 CMD ["fastapi", "run", "app/main.py", "--port", "80"]
+
+HEALTHCHECK --interval=1m00s --timeout=5s --retries=5 CMD curl --include --request GET http://localhost:80/ || exit 1

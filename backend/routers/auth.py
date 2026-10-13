@@ -50,13 +50,13 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str | None = payload.get("sub")
+        username: str | None = payload.get("email")
         if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
 
-    user = session.exec(select(User).where(User.username == username)).first()
+    user = session.exec(select(User).where(User.email == email)).first()
     if user is None:
         raise credentials_exception
     return user
@@ -66,7 +66,7 @@ def get_current_user(
 def register(user_data: UserCreate, session: SessionDep):
     existing = session.exec(
         select(User).where(
-            (User.email == user_data.email) | (User.username == user_data.username)
+            (User.email == user_data.email)
         )
     ).first()
     if existing:
@@ -77,7 +77,6 @@ def register(user_data: UserCreate, session: SessionDep):
 
     user = User(
         email=user_data.email,
-        username=user_data.username,
         name=user_data.name,
         password=hash_password(user_data.password),
     )

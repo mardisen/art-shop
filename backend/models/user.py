@@ -26,7 +26,7 @@ class Artist(User, table=True):
     __table_args__ = (UniqueConstraint("email", name="artist_email_constraint"),)
 
 
-class Istitute(User, table=True):
+class Institute(User, table=True):
     address: str = Field()
     link: str | None = Field(default=None)
     description: str | None = Field(default=None)

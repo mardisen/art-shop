@@ -1,3 +1,4 @@
+from models.user import Institute
 from models.bookmark import Bookmark
 from sqlmodel import Relationship
 from pydantic_extra_types.coordinate import Latitude
@@ -18,6 +19,9 @@ class WorkshopBase(SQLModel):
 
 class Workshop(WorkshopBase, table=True):
     id: int | None = Field(primary_key=True, default=None)
+    
+    institue_id : int | None = Field(default=None, foreign_key="institute.id")
+    created_by: Institute | None = Relationship()
 
     bookmarked_artists: list["Artist"] = Relationship(
         back_populates="bookmarked_workshops", link_model=Bookmark
