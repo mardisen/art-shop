@@ -1,7 +1,7 @@
+from app.models.user import UserResponse
 from jose import JWTError, jwt
 from app.database import SessionDep
-from models.user import UserCreate
-from models.user import UserBase
+from app.models.user import UserCreate
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlmodel import select
 
-from models.user import User
+from app.models.user import User
 from app.utils import hash_password, verify_password
 
 from dotenv import load_dotenv
@@ -62,7 +62,7 @@ def get_current_user(
     return user
 
 
-@router.post("/register", response_model=UserBase, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, session: SessionDep):
     existing = session.exec(select(User).where((User.email == user_data.email))).first()
     if existing:
@@ -103,6 +103,6 @@ def login(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me", response_model=UserBase)
-def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: Annotated[UserResponse, Depends(get_current_user)]):
     return current_user

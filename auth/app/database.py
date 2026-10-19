@@ -2,8 +2,8 @@ from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session, SQLModel
 from sqlalchemy import create_engine
-from .utils import create_db_connection_string
-from models.user import User
+from app.utils import create_db_connection_string
+from app.models.user import User
 
 engine = create_engine(create_db_connection_string())
 

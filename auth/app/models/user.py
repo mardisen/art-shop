@@ -37,3 +37,10 @@ class UserCreate(BaseModel):
     surname: str
     password: str
     role: Role
+
+
+class UserResponse(BaseModel):
+    email: EmailStr
+    name: str
+    surname: str
+    id: int
