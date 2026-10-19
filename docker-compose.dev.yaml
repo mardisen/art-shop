@@ -24,22 +24,22 @@ services:
     ports:
       - 8080:8080
     networks:
-      - common
-  
-  db_seed:
-    image: artshop/backend
-    depends_on:
-      db:
-        condition: service_healthy
-      backend:
-        condition: service_healthy
-    restart: "no"
-    entrypoint: [ "python", "app/cli.py" ]
-    build:
-      context: backend
-      dockerfile: ./Dockerfile
-    networks:
       - backend
+  
+  # db_seed:
+  #   image: artshop/backend
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     backend:
+  #       condition: service_healthy
+  #   restart: "no"
+  #   entrypoint: [ "python", "app/cli.py" ]
+  #   build:
+  #     context: backend
+  #     dockerfile: ./Dockerfile
+  #   networks:
+  #     - backend
   
   backend:
     image: artshop/backend
@@ -52,9 +52,9 @@ services:
     ports:
       - 8000:80
     networks:
-      - common
+      - backend
 
 
 networks:
-  common:
+  backend:
     driver: bridge
