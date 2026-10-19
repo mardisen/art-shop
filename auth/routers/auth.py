@@ -1,0 +1,108 @@
+from jose import JWTError, jwt
+from app.database import SessionDep
+from models.user import UserCreate
+from models.user import UserBase
+from datetime import datetime, timedelta, timezone
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from sqlmodel import select
+
+from models.user import User
+from app.utils import hash_password, verify_password
+
+from dotenv import load_dotenv
+from os import getenv
+
+load_dotenv()
+
+SECRET_KEY = getenv("SECRET_KEY") or ""
+ALGORITHM = getenv("ALGORITHM") or ""
+ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or 0)
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str | None = payload.get("email")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = session.exec(select(User).where(User.email == email)).first()
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+@router.post("/register", response_model=UserBase, status_code=status.HTTP_201_CREATED)
+def register(user_data: UserCreate, session: SessionDep):
+    existing = session.exec(
+        select(User).where(
+            (User.email == user_data.email)
+        )
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or username already registered",
+        )
+
+    user = User(
+        email=user_data.email,
+        name=user_data.name,
+        password=hash_password(user_data.password),
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@router.post("/login", response_model=Token)
+def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: SessionDep,
+):
+    user = session.exec(select(User).where(User.email == form_data.username)).first()
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(data={"sub": User.email})
+    return Token(access_token=access_token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserBase)
+def get_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
