@@ -36,3 +36,4 @@ class UserCreate(BaseModel):
     name: str
     surname: str
     password: str
+    role: Role

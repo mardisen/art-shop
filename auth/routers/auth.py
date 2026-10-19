@@ -64,20 +64,18 @@ def get_current_user(
 
 @router.post("/register", response_model=UserBase, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, session: SessionDep):
-    existing = session.exec(
-        select(User).where(
-            (User.email == user_data.email)
-        )
-    ).first()
+    existing = session.exec(select(User).where((User.email == user_data.email))).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email or username already registered",
+            detail="Email already registered",
         )
 
     user = User(
         email=user_data.email,
         name=user_data.name,
+        surname=user_data.surname,
+        role=user_data.role,
         password=hash_password(user_data.password),
     )
     session.add(user)
@@ -99,7 +97,9 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(data={"sub": User.email})
+    access_token = create_access_token(
+        data={"email": user.email, "institute": user.institute_id, "id": user.id}
+    )
     return Token(access_token=access_token, token_type="bearer")
 
 
