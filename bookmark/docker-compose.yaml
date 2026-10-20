@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres
+    container_name: "$SERVICE_NAME-postgres"
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: example
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: fastapi
+    ports:
+      - 5434:5432
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U example -d fastapi"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  fastapi:
+    image: "artshop/$SERVICE_NAME"
+    container_name: "$SERVICE_NAME-fastapi"
+    depends_on:
+      db:
+        condition: service_healthy
+    build:
+      dockerfile: ./Dockerfile
+    ports:
+      - 8002:80
+    networks:
+      - backend
+      - public
+
+
+networks:
+  backend:
+    name: artshop-$SERVICE_NAME-private
+    driver: bridge
+    internal: true
+  public:
+    name: artshop-$SERVICE_NAME-public
+    driver: bridge
