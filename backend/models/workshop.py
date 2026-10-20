@@ -22,7 +22,7 @@ class WorkshopBase(SQLModel):
 class Workshop(WorkshopBase, table=True):
     id: int | None = Field(primary_key=True, default=None)
     
-    institue_id : int | None = Field(default=None, foreign_key="institute.id")
+    institute_id : int | None = Field(default=None, foreign_key="institute.id")
     institute: Institute | None = Relationship(back_populates="workshops")
 
     created_by : int | None = Field(default=None, foreign_key="user.id")

@@ -133,3 +133,31 @@ def test_me_token_for_unknown_user(client):
     token = create_access_token(data={"email": "ghost@example.com"})
     resp = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 401
+
+
+def users_headers(client):
+    login = client.post(
+        "/auth/login",
+        data={"username": "user@example.com", "password": "secret123"},
+    )
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+
+def test_users_by_id_public_fields_only(client):
+    user_id = register(client).json()["id"]
+    resp = client.get(f"/auth/users/{user_id}", headers=users_headers(client))
+    assert resp.status_code == 200
+    assert resp.json() == {"id": user_id, "name": "Alice", "surname": "Smith"}
+    assert "password" not in resp.json()
+    assert "email" not in resp.json()
+
+
+def test_users_by_id_requires_token(client):
+    resp = client.get("/auth/users/1")
+    assert resp.status_code == 401
+
+
+def test_users_by_id_unknown_user(client):
+    register(client)
+    resp = client.get("/auth/users/999", headers=users_headers(client))
+    assert resp.status_code == 404

@@ -106,3 +106,15 @@ def login(
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: Annotated[UserResponse, Depends(get_current_user)]):
     return current_user
+
+
+@router.get("/users/{user_id}", response_model=UserResponse)
+def read_user(
+    user_id: int,
+    session: SessionDep,
+    _: Annotated[User, Depends(get_current_user)],
+):
+    user = session.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
