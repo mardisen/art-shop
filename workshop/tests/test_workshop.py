@@ -102,3 +102,78 @@ def test_delete_requires_ownership(client):
     ok = client.delete(f"/workshop/{created['id']}", headers={"X-User-Id": "1"})
     assert ok.status_code == 200
     assert client.get(f"/workshop/{created['id']}").status_code == 404
+
+
+def create_with(client, **overrides):
+    headers = {"X-User-Id": "7"}
+    body = WORKSHOP_BODY | overrides
+    return client.post("/workshop/", json=body, headers=headers).json()
+
+
+def seed(client):
+    milan = create_with(client)
+    rome = create_with(client, name="Marble carving", description="Statue carving with hammers",
+                       latitude=41.9028, longitude=12.4964, type="Sculpture")
+    venice = create_with(client, name="Watercolor bridges", description="Paint the canals at sunset",
+                         latitude=45.4408, longitude=12.3155, type="Painting")
+    return milan, rome, venice
+
+
+def test_search_empty_body_returns_all(client):
+    milan, rome, venice = seed(client)
+    resp = client.post("/workshop/search", json={})
+    assert resp.status_code == 200
+    assert {w["id"] for w in resp.json()} == {milan["id"], rome["id"], venice["id"]}
+
+
+def test_search_by_type(client):
+    milan, rome, venice = seed(client)
+    resp = client.post("/workshop/search", json={"type": "Sculpture"})
+    assert [w["id"] for w in resp.json()] == [rome["id"]]
+
+
+def test_search_by_text_matches_name_or_description(client):
+    milan, rome, venice = seed(client)
+    by_name = client.post("/workshop/search", json={"search": "pottery"})
+    assert [w["id"] for w in by_name.json()] == [milan["id"]]
+    by_description = client.post("/workshop/search", json={"search": "canals"})
+    assert [w["id"] for w in by_description.json()] == [venice["id"]]
+    no_match = client.post("/workshop/search", json={"search": "zzz"})
+    assert no_match.json() == []
+
+
+def test_search_by_distance(client):
+    milan, rome, venice = seed(client)
+    near = client.post(
+        "/workshop/search",
+        json={"latitude": 45.4642, "longitude": 9.19, "distance": 300},
+    )
+    assert {w["id"] for w in near.json()} == {milan["id"], venice["id"]}
+    city_only = client.post(
+        "/workshop/search",
+        json={"latitude": 45.4642, "longitude": 9.19, "distance": 1},
+    )
+    assert [w["id"] for w in city_only.json()] == [milan["id"]]
+
+
+def test_search_combines_filters(client):
+    milan, rome, venice = seed(client)
+    resp = client.post(
+        "/workshop/search",
+        json={
+            "latitude": 45.4642,
+            "longitude": 9.19,
+            "distance": 300,
+            "search": "watercolor",
+        },
+    )
+    assert [w["id"] for w in resp.json()] == [venice["id"]]
+
+
+def test_search_ignores_partial_distance_args(client):
+    milan, rome, venice = seed(client)
+    resp = client.post(
+        "/workshop/search",
+        json={"latitude": 45.4642, "longitude": 9.19},
+    )
+    assert len(resp.json()) == 3

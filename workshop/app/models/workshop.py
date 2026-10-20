@@ -28,7 +28,8 @@ class WorkshopBase(SQLModel):
     link: str | None = Field(default=None)
 
     type: Type = Field(
-        sa_column=Column(Enum(Type), default=Type.Other, nullable=True, index=False)
+        default=Type.Other,
+        sa_column=Column(Enum(Type), default=Type.Other, nullable=True, index=False),
     )
 
 
@@ -39,7 +40,8 @@ class Workshop(WorkshopBase, table=True):
     created_by: int | None = Field(default=None, index=True)
 
 class WorkshopSearch(BaseModel):
-    latitude: Latitude
-    longitude: Longitude
-    distance: int
-    type: Type
+    latitude: Latitude | None = None
+    longitude: Longitude | None = None
+    distance: float | None = None
+    type: Type | None = None
+    search: str | None = None

@@ -1,11 +1,13 @@
+from app.utils import distance_between_points
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from sqlmodel import select
+from sqlmodel import or_, select
 
 from app.database import SessionDep
 from app.models.workshop import Workshop
 from app.models.workshop import WorkshopBase
+from app.models.workshop import WorkshopSearch
 
 
 router = APIRouter(prefix="/workshop", tags=["workshop"])
@@ -50,8 +52,47 @@ def get_workshops(session: SessionDep):
     return workshops
 
 
+@router.post("/search")
+def search_workshops(search_args: WorkshopSearch, session: SessionDep):
+    statement = select(Workshop)
+
+    if search_args.type is not None:
+        statement = statement.where(Workshop.type == search_args.type)
+
+    if search_args.search is not None:
+        statement = statement.where(
+            or_(
+                Workshop.name.contains(search_args.search),  # pyrefly: ignore[missing-attribute]
+                Workshop.description.contains(search_args.search),  # pyrefly: ignore[missing-attribute]
+            )
+        )
+
+    workshops = session.exec(statement).all()
+
+    if (
+        search_args.latitude is not None
+        and search_args.longitude is not None
+        and search_args.distance is not None
+    ):
+        workshops = [
+            workshop
+            for workshop in workshops
+            if distance_between_points(
+                workshop.latitude,
+                workshop.longitude,
+                search_args.latitude,
+                search_args.longitude,
+            )
+            <= search_args.distance
+        ]
+
+    return workshops
+
+
 @router.put("/{id}")
-def update_workshop(id: int, workshop: WorkshopBase, session: SessionDep, caller_id: CallerDep):
+def update_workshop(
+    id: int, workshop: WorkshopBase, session: SessionDep, caller_id: CallerDep
+):
     db_workshop = session.get(Workshop, id)
     if not db_workshop:
         raise HTTPException(status_code=404, detail="Workshop not found")
