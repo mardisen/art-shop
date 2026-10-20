@@ -3,7 +3,7 @@ from fastapi import Depends
 from sqlmodel import Session, SQLModel
 from sqlalchemy import create_engine
 from app.utils import create_db_connection_string
-from app.models.user import User
+from app.models.workshop import Workshop
 
 engine = create_engine(create_db_connection_string())
 
