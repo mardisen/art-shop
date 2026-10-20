@@ -1,3 +1,4 @@
+from sqlmodel import Date
 from models.institute import Institute
 from models.bookmark import Bookmark
 from sqlmodel import Relationship
@@ -11,6 +12,7 @@ from sqlmodel import SQLModel
 class WorkshopBase(SQLModel):
     latitude: Longitude = Field()
     longitude: Latitude = Field()
+    date: Date = Field()
     address: str = Field()
     name: str = Field()
     description: str = Field()
@@ -21,7 +23,9 @@ class Workshop(WorkshopBase, table=True):
     id: int | None = Field(primary_key=True, default=None)
     
     institue_id : int | None = Field(default=None, foreign_key="institute.id")
-    created_by: Institute | None = Relationship(back_populates="workshops")
+    institute: Institute | None = Relationship(back_populates="workshops")
+
+    created_by : int | None = Field(default=None, foreign_key="user.id")
 
     bookmarked_artists: list["User"] = Relationship(
         back_populates="bookmarked_workshops", link_model=Bookmark
