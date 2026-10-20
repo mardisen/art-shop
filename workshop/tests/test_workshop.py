@@ -72,6 +72,29 @@ def test_list_and_read_workshop(client):
     assert client.get("/workshop/999").status_code == 404
 
 
+def test_update_requires_ownership(client):
+    created = create(client, user_id=1).json()
+    forbidden = client.put(
+        f"/workshop/{created['id']}", json=WORKSHOP_BODY | {"name": "Hacked"},
+        headers={"X-User-Id": "2"},
+    )
+    assert forbidden.status_code == 403
+    ok = client.put(
+        f"/workshop/{created['id']}", json=WORKSHOP_BODY | {"name": "Renamed"},
+        headers={"X-User-Id": "1"},
+    )
+    assert ok.status_code == 200
+    assert ok.json()["name"] == "Renamed"
+    assert ok.json()["created_by"] == 1
+
+
+def test_update_unknown_workshop(client):
+    resp = client.put(
+        "/workshop/999", json=WORKSHOP_BODY, headers={"X-User-Id": "1"}
+    )
+    assert resp.status_code == 404
+
+
 def test_delete_requires_ownership(client):
     created = create(client, user_id=1).json()
     forbidden = client.delete(f"/workshop/{created['id']}", headers={"X-User-Id": "2"})

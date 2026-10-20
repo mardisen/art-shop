@@ -50,6 +50,21 @@ def get_workshops(session: SessionDep):
     return workshops
 
 
+@router.put("/{id}")
+def update_workshop(id: int, workshop: WorkshopBase, session: SessionDep, caller_id: CallerDep):
+    db_workshop = session.get(Workshop, id)
+    if not db_workshop:
+        raise HTTPException(status_code=404, detail="Workshop not found")
+    if db_workshop.created_by != caller_id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+    for field in workshop.model_dump(exclude_unset=True):
+        setattr(db_workshop, field, getattr(workshop, field))
+    session.add(db_workshop)
+    session.commit()
+    session.refresh(db_workshop)
+    return db_workshop
+
+
 @router.delete("/{id}")
 def delete_workshop(id: int, session: SessionDep, caller_id: CallerDep):
     workshop = session.get(Workshop, id)
