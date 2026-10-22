@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlmodel import select
 
+from app.models.user import Role
 from app.models.user import User
 from app.utils import hash_password, verify_password
 
@@ -29,6 +30,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+
+class InstituteChoice(BaseModel):
+    institute_id: int | None = None
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -111,6 +116,31 @@ def login(
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: Annotated[UserResponse, Depends(get_current_user)]):
     return current_user
+
+
+@router.put("/institute", response_model=Token)
+def choose_institute(
+    choice: InstituteChoice,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    if current_user.role != Role.Staff:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Staff only"
+        )
+    current_user.institute_id = choice.institute_id
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    access_token = create_access_token(
+        data={
+            "email": current_user.email,
+            "institute": current_user.institute_id,
+            "id": current_user.id,
+            "role": current_user.role.value if current_user.role else None,
+        }
+    )
+    return Token(access_token=access_token, token_type="bearer")
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)

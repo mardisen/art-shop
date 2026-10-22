@@ -178,3 +178,41 @@ def test_users_by_id_unknown_user(client):
     register(client)
     resp = client.get("/auth/users/999", headers=users_headers(client))
     assert resp.status_code == 404
+
+
+def institute_choice(client, institute_id=5):
+    register(client, role="Staff")
+    headers = users_headers(client)
+    return client.put("/auth/institute", json={"institute_id": institute_id}, headers=headers)
+
+
+def decode_claim(token, claim):
+    return jwt.decode(token, "", options={"verify_signature": False})[claim]
+
+
+def test_staff_chooses_institute(client):
+    resp = institute_choice(client, institute_id=5)
+    assert resp.status_code == 200
+    assert decode_claim(resp.json()["access_token"], "institute") == 5
+
+
+def test_staff_changes_institute(client):
+    institute_choice(client, institute_id=5)
+    resp = client.put(
+        "/auth/institute",
+        json={"institute_id": 9},
+        headers=users_headers(client),
+    )
+    assert decode_claim(resp.json()["access_token"], "institute") == 9
+
+
+def test_artist_cannot_choose_institute(client):
+    register(client, role="Artist")
+    headers = users_headers(client)
+    resp = client.put("/auth/institute", json={"institute_id": 5}, headers=headers)
+    assert resp.status_code == 403
+
+
+def test_choose_institute_requires_token(client):
+    resp = client.put("/auth/institute", json={"institute_id": 5})
+    assert resp.status_code == 401
