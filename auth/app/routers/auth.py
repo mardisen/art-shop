@@ -98,7 +98,12 @@ def login(
         )
 
     access_token = create_access_token(
-        data={"email": user.email, "institute": user.institute_id, "id": user.id}
+        data={
+            "email": user.email,
+            "institute": user.institute_id,
+            "id": user.id,
+            "role": user.role.value if user.role else None,
+        }
     )
     return Token(access_token=access_token, token_type="bearer")
 

@@ -1,6 +1,7 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from jose import jwt
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -143,13 +144,29 @@ def users_headers(client):
     return {"Authorization": f"Bearer {login.json()['access_token']}"}
 
 
-def test_users_by_id_public_fields_only(client):
+def test_login_token_contains_role_claim(client):
+    register(client, role="Staff")
+    login = client.post(
+        "/auth/login",
+        data={"username": "user@example.com", "password": "secret123"},
+    )
+    token = login.json()["access_token"]
+    payload = jwt.decode(token, "", options={"verify_signature": False})
+    assert payload["role"] == "Staff"
+    assert payload["id"] is not None
+
+
+def test_users_by_id_returns_user_without_password(client):
     user_id = register(client).json()["id"]
     resp = client.get(f"/auth/users/{user_id}", headers=users_headers(client))
     assert resp.status_code == 200
-    assert resp.json() == {"id": user_id, "name": "Alice", "surname": "Smith"}
+    assert resp.json() == {
+        "id": user_id,
+        "name": "Alice",
+        "surname": "Smith",
+        "email": "user@example.com",
+    }
     assert "password" not in resp.json()
-    assert "email" not in resp.json()
 
 
 def test_users_by_id_requires_token(client):
