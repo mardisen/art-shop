@@ -1,3 +1,6 @@
+from sqlalchemy.exc import IntegrityError
+from app.models.user import Role
+from app.utils import hash_password
 from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session, SQLModel
@@ -6,6 +9,40 @@ from app.utils import create_db_connection_string
 from app.models.user import User
 
 engine = create_engine(create_db_connection_string())
+
+test_data = {
+    "users": [
+        User(
+            id=1,
+            name="artist",
+            surname="artist",
+            email="artist@example.com",
+            password=hash_password("artist"),
+            role=Role.Artist,
+        ),
+        User(
+            id=2,
+            name="staff",
+            surname="staff",
+            email="staff@example.com",
+            password=hash_password("staff"),
+            role=Role.Staff,
+            institute_id=1,
+        ),
+    ],
+}
+
+
+def seed_db():
+    create_db_and_tables()
+    with Session(engine) as session:
+        for key, values in test_data.items():
+            for value in values:
+                try:
+                    session.add(value)
+                    session.commit()
+                except IntegrityError:
+                    session.rollback()
 
 
 def create_db_and_tables():

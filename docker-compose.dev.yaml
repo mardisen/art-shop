@@ -26,20 +26,20 @@ services:
     networks:
       - backend
   
-  # db_seed:
-  #   image: artshop/backend
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     backend:
-  #       condition: service_healthy
-  #   restart: "no"
-  #   entrypoint: [ "python", "app/cli.py" ]
-  #   build:
-  #     context: backend
-  #     dockerfile: ./Dockerfile
-  #   networks:
-  #     - backend
+  db_seed:
+    image: artshop/backend
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: [ "python", "app/cli.py" ]
+    build:
+      context: backend
+      dockerfile: ./Dockerfile
+    networks:
+      - backend
   
   backend:
     image: artshop/backend

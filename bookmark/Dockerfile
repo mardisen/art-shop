@@ -12,6 +12,8 @@ WORKDIR /app
 COPY .docker.env .env
 RUN if [ -f uv.lock ]; then uv sync --frozen --no-cache; else uv sync --no-cache; fi
 
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
 # Run the application.
 CMD ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]
 

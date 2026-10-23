@@ -21,6 +21,11 @@ x-api: &api
     retries: 5
     start_period: 20s
 
+x-seed: &seed
+    restart: "no"
+    entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
+
+
 services:
   auth-db:
     <<: *db
@@ -45,6 +50,20 @@ services:
     networks:
     - auth
     - public
+  
+  auth_seed:
+    <<: *seed
+    image: artshop/auth
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    build:
+      context: auth
+      dockerfile: ./Dockerfile
+    networks:
+      - auth
 
   bookmark-db:
     <<: *db
@@ -70,6 +89,20 @@ services:
     - bookmark
     - public
 
+  bookmark_seed:
+    <<: *seed
+    image: artshop/bookmark
+    depends_on:
+      bookmark-db:
+        condition: service_healthy
+      bookmark:
+        condition: service_healthy
+    build:
+      context: bookmark
+      dockerfile: ./Dockerfile
+    networks:
+      - bookmark
+
   institute-db:
     <<: *db
     container_name: institute-postgres
@@ -94,6 +127,20 @@ services:
     - institute
     - public
 
+  institute_seed:
+    <<: *seed
+    image: artshop/institute
+    depends_on:
+      institute-db:
+        condition: service_healthy
+      institute:
+        condition: service_healthy
+    build:
+      context: institute
+      dockerfile: ./Dockerfile
+    networks:
+      - institute
+
   workshop-db:
     <<: *db
     container_name: workshop-postgres
@@ -117,6 +164,20 @@ services:
     networks:
     - workshop
     - public
+  
+  workshop_seed:
+    <<: *seed
+    image: artshop/workshop
+    depends_on:
+      workshop-db:
+        condition: service_healthy
+      workshop:
+        condition: service_healthy
+    build:
+      context: workshop
+      dockerfile: ./Dockerfile
+    networks:
+      - workshop
 
 networks:
   auth:
