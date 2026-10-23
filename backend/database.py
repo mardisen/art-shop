@@ -71,7 +71,6 @@ test_data = {
 
 
 def seed_db():
-    print("lmao")
     create_db_and_tables()
     with Session(engine) as session:
         for key, values in test_data.items():
