@@ -1,0 +1,8 @@
+services:  
+  fastapi:
+    image: "artshop/$SERVICE_NAME"
+    container_name: "$SERVICE_NAME-fastapi"
+    build:
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:80
