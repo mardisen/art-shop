@@ -1,11 +1,16 @@
+from starlette.datastructures import URL
+from starlette.datastructures import Headers
+import httpx2
 from email.policy import default
 from enum import Enum
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 from os import getenv
+from fastapi import Request
 
 
 load_dotenv()
+
 
 class ServiceMatch:
     auth_match = getenv("AUTH_MATCH")
@@ -13,21 +18,61 @@ class ServiceMatch:
     institute_match = getenv("INSTITUTE_MATCH")
     workshop_match = getenv("WORKSHOP_MATCH")
 
+
+class ServiceUrl:
+    auth_url = getenv("AUTH_URL") or "http://localhost:8001"
+    bookmark_url = getenv("BOOKMARK_URL") or "http://localhost:8002"
+    institute_url = getenv("INSTITUTE_URL") or "http://localhost:8003"
+    workshop_url = getenv("WORKSHOP_URL") or "http://localhost:8004"
+
+
 class ServiceNotFoundException(Exception):
     pass
 
-def get_service_url(requested_url: str):
-    base_url = urlparse(requested_url).path.split("/")[1]
+
+def get_service_url(requested_url: URL):
+    base_url = requested_url.path.split("/")[1]
 
     match base_url:
         case ServiceMatch.auth_match:
-            return getenv("AUTH_URL")
+            return ServiceUrl.auth_url
         case ServiceMatch.bookmark_match:
-            return getenv("BOOKMARK_URL")
+            return ServiceUrl.bookmark_url
         case ServiceMatch.institute_match:
-            return getenv("INSTITUTE_URL")
+            return ServiceUrl.institute_url
         case ServiceMatch.workshop_match:
-            return getenv("WORKSHOP_URL")
+            return ServiceUrl.workshop_url
         case _:
             raise ServiceNotFoundException()
-            
+
+
+async def get_security_headers(headers: Headers):
+    async with httpx2.AsyncClient() as client:
+        response = (
+            await client.get(ServiceUrl.auth_url + "/auth/me", headers=headers)
+        ).json()
+
+        return_headers = headers.mutablecopy()
+
+        print(response)
+
+        try:
+            return_headers["X-User-Id"] = response["id"]
+            return_headers["X-Institute-Id"] = response["institute_id"]
+            return_headers["X-User-Role"] = response["role"]
+        except KeyError:
+            pass
+
+        return return_headers
+
+
+async def forward_request(request: Request):
+    url = get_service_url(request.url) + request.url.path
+    print(url)
+
+    headers = await get_security_headers(request.headers)
+    print(headers)
+
+    json = await request.json() if request.method in ["POST", "PUT", "PATCH"] else None
+    async with httpx2.AsyncClient() as client:
+        return await client.request(request.method, url, headers=headers, json=json)
