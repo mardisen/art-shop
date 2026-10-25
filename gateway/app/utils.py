@@ -1,3 +1,4 @@
+from json.decoder import JSONDecodeError
 from starlette.datastructures import URL
 from starlette.datastructures import Headers
 import httpx2
@@ -48,18 +49,18 @@ def get_service_url(requested_url: URL):
 
 async def get_security_headers(headers: Headers):
     async with httpx2.AsyncClient() as client:
-        response = (
-            await client.get(ServiceUrl.auth_url + "/auth/me", headers=headers)
-        ).json()
+        response = await client.get(ServiceUrl.auth_url + "/auth/me", headers=headers)
+
+        json = response.json()
 
         return_headers = headers.mutablecopy()
 
-        print(response)
+        print(json)
 
         try:
-            return_headers["X-User-Id"] = response["id"]
-            return_headers["X-Institute-Id"] = response["institute_id"]
-            return_headers["X-User-Role"] = response["role"]
+            return_headers["X-User-Id"] = str(json["id"])
+            return_headers["X-User-Role"] = json["role"]
+            return_headers["X-Institute-Id"] = str(json["institute_id"])
         except KeyError:
             pass
 
@@ -73,6 +74,12 @@ async def forward_request(request: Request):
     headers = await get_security_headers(request.headers)
     print(headers)
 
-    json = await request.json() if request.method in ["POST", "PUT", "PATCH"] else None
+    try:
+        json = await request.json()
+    except JSONDecodeError:
+        json = None
+    form = await request.form()
     async with httpx2.AsyncClient() as client:
-        return await client.request(request.method, url, headers=headers, json=json)
+        return await client.request(
+            request.method, url, headers=headers, json=json, data=form
+        )

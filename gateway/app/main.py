@@ -30,7 +30,6 @@ def read_root():
 
 @app.api_route("{path_name:path}", methods=["GET", "POST", "DELETE", "PUT"])
 async def route(request: Request):
-
     try:
         response = await forward_request(request)
         return JSONResponse(status_code=response.status_code, content=response.json())

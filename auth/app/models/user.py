@@ -46,5 +46,5 @@ class UserResponse(BaseModel):
     id: int
 
 class UserTokenResponse(UserResponse):
-    institute_id: int
+    institute_id: int | None
     role: Role
