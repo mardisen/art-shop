@@ -44,3 +44,7 @@ class UserResponse(BaseModel):
     name: str
     surname: str
     id: int
+
+class UserTokenResponse(UserResponse):
+    institute_id: int | None
+    role: Role

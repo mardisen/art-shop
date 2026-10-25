@@ -178,6 +178,27 @@ services:
       dockerfile: ./Dockerfile
     networks:
       - workshop
+  
+  gateway:
+    <<: *api
+    container_name: gateway
+    image: artshop/gateway
+    build:
+      context: ./gateway
+      dockerfile: ./Dockerfile
+    depends_on:
+      auth:
+        condition: service_healthy
+      bookmark:
+        condition: service_healthy
+      institute:
+        condition: service_healthy
+      workshop:
+        condition: service_healthy
+    ports:
+      - 8000:80
+    networks:
+    - public
 
 networks:
   auth:

@@ -1,3 +1,4 @@
+from app.models.user import UserTokenResponse
 from app.models.user import UserResponse
 from jose import JWTError, jwt
 from app.database import SessionDep
@@ -113,8 +114,8 @@ def login(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me", response_model=UserResponse)
-def get_me(current_user: Annotated[UserResponse, Depends(get_current_user)]):
+@router.get("/me", response_model=UserTokenResponse, response_model_exclude_none=True)
+def get_me(current_user: Annotated[UserTokenResponse, Depends(get_current_user)]):
     return current_user
 
 
