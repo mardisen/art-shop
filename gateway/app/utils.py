@@ -81,5 +81,5 @@ async def forward_request(request: Request):
     form = await request.form()
     async with httpx2.AsyncClient() as client:
         return await client.request(
-            request.method, url, headers=headers, json=json, data=form
+            request.method, url, headers=headers, json=json, data=form, params=request.query_params
         )
