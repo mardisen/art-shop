@@ -49,7 +49,10 @@ def get_service_url(requested_url: URL):
 
 async def get_security_headers(headers: Headers):
     async with httpx2.AsyncClient() as client:
-        response = await client.get(ServiceUrl.auth_url + "/auth/me", headers=headers)
+        token_headers = {"authorization": headers.get("authorization") or ""}
+        response = await client.get(
+            ServiceUrl.auth_url + "/auth/me", headers=token_headers
+        )
 
         json = response.json()
 
@@ -81,5 +84,10 @@ async def forward_request(request: Request):
     form = await request.form()
     async with httpx2.AsyncClient() as client:
         return await client.request(
-            request.method, url, headers=headers, json=json, data=form
+            request.method,
+            url,
+            headers=headers,
+            json=json,
+            data=form,
+            params=request.query_params,
         )

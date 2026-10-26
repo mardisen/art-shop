@@ -1,3 +1,5 @@
+from fastapi import Response
+from starlette.status import HTTP_404_NOT_FOUND
 from fastapi.responses import JSONResponse
 from app.utils import forward_request
 from app.utils import ServiceNotFoundException
@@ -32,6 +34,6 @@ def read_root():
 async def route(request: Request):
     try:
         response = await forward_request(request)
-        return JSONResponse(status_code=response.status_code, content=response.json())
+        return Response(status_code=response.status_code, content=response.content)
     except ServiceNotFoundException as rnfe:
-        return {"unauthorized": "No such route"}
+        return JSONResponse(status_code=HTTP_404_NOT_FOUND, content={"unauthorized": "No such route"})
