@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { API_URL, setToken } from "../../lib/auth";
+import { API_URL, setCookieToken } from "../../lib/auth";
 import { FormField } from "../../components/FormField";
 import { Button } from "../../components/Button";
+import { TokenContext } from "@/lib/providers";
 
 export default function LoginPage() {
     const router = useRouter();
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const { token, setToken } = useContext(TokenContext);
 
     async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -36,6 +38,7 @@ export default function LoginPage() {
         }
 
         const token = (await res.json()) as { access_token: string };
+        setCookieToken(token.access_token);
         setToken(token.access_token);
         router.push("/");
     }

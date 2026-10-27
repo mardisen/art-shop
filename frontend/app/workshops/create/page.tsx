@@ -9,6 +9,8 @@ interface Workshop {
     latitude: number;
     longitude: number;
     link: string;
+    type: string;
+    date: Date;
 }
 
 async function getWorkshops(): Promise<Workshop[]> {

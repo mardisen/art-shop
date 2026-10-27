@@ -1,21 +1,16 @@
-import { apiFetch } from "@/lib/auth";
+"use client";
+
+import { TokenContext } from "@/lib/providers";
 import Link from "next/link";
+import { useContext, useEffect, useState } from "react";
 
-interface User {
-    name: string;
-    username: string;
-    email: string;
-}
+export function Navbar() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { token, _ } = useContext(TokenContext);
 
-async function getMe(): Promise<User | null> {
-    const res = await apiFetch(`/auth/me`, { cache: "no-store" });
-    const jsonBody = await res.json();
-    if (!res.ok) return null;
-    return jsonBody;
-}
-
-export async function Navbar() {
-    const isAuthenticated = (await getMe()) != null;
+    useEffect(() => {
+        setIsAuthenticated(token != null && token.length > 0);
+    }, [token]);
 
     return (
         <nav className="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-800 w-full">
