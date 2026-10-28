@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { unauthorized, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { apiFetch } from "@/lib/auth";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/Button";
 import "leaflet/dist/leaflet.css";
+import { UserContext } from "@/lib/providers";
+import { Role } from "@/lib/models";
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 
@@ -16,6 +18,7 @@ export default function CreateWorkshopPage() {
     const [loading, setLoading] = useState(false);
     const [lat, setLat] = useState<number>(41.1171432);
     const [lng, setLng] = useState<number>(16.8718715);
+    const user = useContext(UserContext);
 
     const returnWorkshops = useCallback(
         (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -25,6 +28,10 @@ export default function CreateWorkshopPage() {
         },
         [router]
     );
+
+    useEffect(() => {
+        if (user.role != Role.Professor) router.push("/login");
+    }, [user]);
 
     useEffect(() => {
         if (typeof navigator !== "undefined" && navigator.geolocation) {

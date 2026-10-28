@@ -1,18 +1,7 @@
 import { apiFetch } from "@/lib/auth";
 import Link from "next/link";
 import { Pagination } from "@/components/Pagination";
-
-interface Workshop {
-    id: number;
-    name: string;
-    address: string;
-    description: string;
-    latitude: number;
-    longitude: number;
-    link: string;
-    type: string;
-    date: Date;
-}
+import { Workshop } from "@/lib/models";
 
 async function getWorkshops(): Promise<Workshop[]> {
     const res = await apiFetch(`/workshop/`, { cache: "no-store" });
