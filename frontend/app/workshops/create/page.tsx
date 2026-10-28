@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { API_URL } from "@/lib/auth";
+import { API_URL, apiFetch } from "@/lib/auth";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/Button";
 import "leaflet/dist/leaflet.css";
@@ -27,7 +27,7 @@ export default function CreateWorkshopPage() {
                 },
                 () => {
                     // keep Bari default
-                },
+                }
             );
         }
     }, []);
@@ -45,7 +45,7 @@ export default function CreateWorkshopPage() {
             link: formData.get("link") || null,
             date: formData.get("date"),
             latitude: lat,
-            longitude: lng,
+            longitude: lng
         };
 
         const { getCookieToken } = await import("@/lib/auth");
@@ -55,10 +55,10 @@ export default function CreateWorkshopPage() {
             headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const res = await fetch(`${API_URL}/workshop/`, {
+        const res = await apiFetch(`/workshop/`, {
             method: "POST",
             headers,
-            body: JSON.stringify(payload),
+            body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
@@ -95,7 +95,14 @@ export default function CreateWorkshopPage() {
                 <FormField label="Date" name="date" type="date" required />
                 <div>
                     <p className="mb-2 text-sm font-medium">Location</p>
-                    <MapPicker lat={lat} lng={lng} onChange={(l, n) => { setLat(l); setLng(n); }} />
+                    <MapPicker
+                        lat={lat}
+                        lng={lng}
+                        onChange={(l, n) => {
+                            setLat(l);
+                            setLng(n);
+                        }}
+                    />
                     <p className="mt-1 text-xs text-zinc-500">
                         {lat.toFixed(6)}, {lng.toFixed(6)}
                     </p>
@@ -107,4 +114,3 @@ export default function CreateWorkshopPage() {
         </div>
     );
 }
-

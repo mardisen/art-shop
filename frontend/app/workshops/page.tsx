@@ -1,6 +1,6 @@
-import { API_URL } from '../../lib/auth';
-import Link from 'next/link';
-import { Pagination } from '@/components/Pagination';
+import { apiFetch } from "@/lib/auth";
+import Link from "next/link";
+import { Pagination } from "@/components/Pagination";
 
 interface Workshop {
     id: number;
@@ -15,22 +15,18 @@ interface Workshop {
 }
 
 async function getWorkshops(): Promise<Workshop[]> {
-    const res = await fetch(`${API_URL}/workshop/`, { cache: 'no-store' });
+    const res = await apiFetch(`/workshop/`, { cache: "no-store" });
     if (!res.ok) return [];
     return res.json();
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export default async function WorkshopsPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ page?: string }>;
-}) {
+export default async function WorkshopsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
     const params = await searchParams;
     const workshops = await getWorkshops();
 
-    const currentPage = Math.max(1, parseInt(params.page || '1', 10) || 1);
+    const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
     const totalPages = Math.max(1, Math.ceil(workshops.length / ITEMS_PER_PAGE));
     const page = Math.min(currentPage, totalPages);
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
@@ -51,7 +47,7 @@ export default async function WorkshopsPage({
                                 <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{w.description}</p>
                                 {w.link && (
                                     <Link
-                                        href={w.link.startsWith('http') ? w.link : `https://${w.link}`}
+                                        href={w.link.startsWith("http") ? w.link : `https://${w.link}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="mt-3 inline-block text-sm font-medium underline"
