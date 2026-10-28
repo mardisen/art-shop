@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import dynamic from "next/dynamic";
-import { API_URL, apiFetch } from "@/lib/auth";
+import { apiFetch } from "@/lib/auth";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/Button";
 import "leaflet/dist/leaflet.css";
@@ -17,6 +16,15 @@ export default function CreateWorkshopPage() {
     const [loading, setLoading] = useState(false);
     const [lat, setLat] = useState<number>(41.1171432);
     const [lng, setLng] = useState<number>(16.8718715);
+
+    const returnWorkshops = useCallback(
+        (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+            event.preventDefault();
+            event.stopPropagation();
+            router.push("/workshops");
+        },
+        [router]
+    );
 
     useEffect(() => {
         if (typeof navigator !== "undefined" && navigator.geolocation) {
@@ -86,12 +94,12 @@ export default function CreateWorkshopPage() {
                     </p>
                 )}
                 <div className="flex w-full flex-row justify-between space-x-12">
-                    <div className="flex flex-col space-y-2 flex-1">
+                    <div className="flex flex-1 flex-col space-y-2">
                         <FormField label="Name" name="name" required />
                         <FormField label="Address" name="address" required />
                         <FormField label="Description" name="description" required />
                     </div>
-                    <div className="flex flex-col space-y-2 flex-1">
+                    <div className="flex flex-1 flex-col space-y-2">
                         <FormField label="Link (optional)" name="link" />
                         <FormField label="Date" name="date" type="date" required />
                     </div>
@@ -110,9 +118,18 @@ export default function CreateWorkshopPage() {
                         {lat.toFixed(6)}, {lng.toFixed(6)}
                     </p>
                 </div>
-                <Button type="submit" loading={loading} loadingText="Creating">
-                    Create
-                </Button>
+                <div className="flex flex-row space-x-12">
+                    <Button
+                        loading={loading}
+                        className="bg-white! text-black! hover:bg-red-500! hover:text-white!"
+                        onClick={returnWorkshops}
+                    >
+                        Cancel
+                    </Button>
+                    <Button type="submit" loading={loading} loadingText="Creating">
+                        Confirm
+                    </Button>
+                </div>
             </form>
         </div>
     );
