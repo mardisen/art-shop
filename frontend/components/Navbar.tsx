@@ -6,7 +6,7 @@ import { useContext, useEffect, useState } from "react";
 
 export function Navbar() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const { token, _ } = useContext(TokenContext);
+    const { token } = useContext(TokenContext);
 
     useEffect(() => {
         setIsAuthenticated(token != null && token.length > 0);

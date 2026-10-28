@@ -1,53 +1,110 @@
-import { API_URL } from "@/lib/auth";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { API_URL } from "@/lib/auth";
+import { FormField } from "@/components/FormField";
+import { Button } from "@/components/Button";
+import "leaflet/dist/leaflet.css";
 
-interface Workshop {
-    id: number;
-    name: string;
-    address: string;
-    description: string;
-    latitude: number;
-    longitude: number;
-    link: string;
-    type: string;
-    date: Date;
-}
+const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 
-async function getWorkshops(): Promise<Workshop[]> {
-    const res = await fetch(`${API_URL}/workshop/`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
-}
+export default function CreateWorkshopPage() {
+    const router = useRouter();
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [lat, setLat] = useState<number>(41.1171432);
+    const [lng, setLng] = useState<number>(16.8718715);
 
-export default async function WorkshopsPage() {
-    const workshops = await getWorkshops();
+    useEffect(() => {
+        if (typeof navigator !== "undefined" && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLat(pos.coords.latitude);
+                    setLng(pos.coords.longitude);
+                },
+                () => {
+                    // keep Bari default
+                },
+            );
+        }
+    }, []);
+
+    async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setLoading(true);
+        setError("");
+        const formData = new FormData(e.currentTarget);
+
+        const payload = {
+            name: formData.get("name"),
+            address: formData.get("address"),
+            description: formData.get("description"),
+            link: formData.get("link") || null,
+            date: formData.get("date"),
+            latitude: lat,
+            longitude: lng,
+        };
+
+        const { getCookieToken } = await import("@/lib/auth");
+        const token = await getCookieToken();
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${API_URL}/workshop/`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            setError(body.detail ?? "Workshop creation failed");
+            setLoading(false);
+            return;
+        }
+
+        router.push("/workshops");
+    }
 
     return (
-        <div className="flex flex-col flex-1 items-start bg-zinc-50 px-12 py-10 dark:bg-black w-full">
-            <h1 className="mb-6 text-2xl font-semibold">Workshops</h1>
-            {workshops.length === 0 ? (
-                <p className="text-zinc-500 px-4">No workshops found.</p>
-            ) : (
-                <ul className="w-full px-4 w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {workshops.map((w) => (
-                        <li key={w.id} className="py-4">
-                            <h2 className="text-lg font-medium">{w.name}</h2>
-                            <p className="mt-1 text-sm text-zinc-500">{w.address}</p>
-                            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{w.description}</p>
-                            {w.link && (
-                                <Link
-                                    href={w.link.startsWith("http") ? w.link : `https://${w.link}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-3 inline-block text-sm font-medium underline"
-                                >
-                                    Visit website
-                                </Link>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            )}
+        <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
+            <form
+                onSubmit={onSubmit}
+                className="w-full max-w-md space-y-4 rounded-xl bg-white p-8 shadow dark:bg-zinc-900"
+            >
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold">Create workshop</h1>
+                    <Link href="/workshops" className="text-sm underline">
+                        Back
+                    </Link>
+                </div>
+                {error && (
+                    <p className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
+                        {error}
+                    </p>
+                )}
+                <FormField label="Name" name="name" required />
+                <FormField label="Address" name="address" required />
+                <FormField label="Description" name="description" required />
+                <FormField label="Link (optional)" name="link" />
+                <FormField label="Date" name="date" type="date" required />
+                <div>
+                    <p className="mb-2 text-sm font-medium">Location</p>
+                    <MapPicker lat={lat} lng={lng} onChange={(l, n) => { setLat(l); setLng(n); }} />
+                    <p className="mt-1 text-xs text-zinc-500">
+                        {lat.toFixed(6)}, {lng.toFixed(6)}
+                    </p>
+                </div>
+                <Button type="submit" loading={loading} loadingText="Creating">
+                    Create
+                </Button>
+            </form>
         </div>
     );
 }
+
