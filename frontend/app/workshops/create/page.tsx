@@ -72,27 +72,30 @@ export default function CreateWorkshopPage() {
     }
 
     return (
-        <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-zinc-50 px-4 py-4 dark:bg-black">
             <form
                 onSubmit={onSubmit}
-                className="w-full max-w-md space-y-4 rounded-xl bg-white p-8 shadow dark:bg-zinc-900"
+                className="min-h-0 w-full max-w-5xl flex-1 space-y-4 overflow-auto rounded-xl bg-white p-8 shadow dark:bg-zinc-900"
             >
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold">Create workshop</h1>
-                    <Link href="/workshops" className="text-sm underline">
-                        Back
-                    </Link>
                 </div>
                 {error && (
                     <p className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
                         {error}
                     </p>
                 )}
-                <FormField label="Name" name="name" required />
-                <FormField label="Address" name="address" required />
-                <FormField label="Description" name="description" required />
-                <FormField label="Link (optional)" name="link" />
-                <FormField label="Date" name="date" type="date" required />
+                <div className="flex w-full flex-row justify-between space-x-12">
+                    <div className="flex flex-col space-y-2 flex-1">
+                        <FormField label="Name" name="name" required />
+                        <FormField label="Address" name="address" required />
+                        <FormField label="Description" name="description" required />
+                    </div>
+                    <div className="flex flex-col space-y-2 flex-1">
+                        <FormField label="Link (optional)" name="link" />
+                        <FormField label="Date" name="date" type="date" required />
+                    </div>
+                </div>
                 <div>
                     <p className="mb-2 text-sm font-medium">Location</p>
                     <MapPicker

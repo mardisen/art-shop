@@ -35,7 +35,7 @@ export default async function WorkshopsPage({ searchParams }: { searchParams: Pr
     return (
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-zinc-50 px-38 py-10 dark:bg-black">
             <h1 className="mb-6 text-2xl font-semibold">Workshops</h1>
-            <div className="mb-4 min-h-0 w-full flex-1 items-start overflow-y-auto rounded-lg bg-white px-8 py-2">
+            <div className="mb-4 min-h-0 w-full flex-1 items-start overflow-y-auto rounded-xl shadow bg-white px-8 py-2">
                 {workshops.length === 0 ? (
                     <p className="px-4 text-zinc-500">No workshops found.</p>
                 ) : (
