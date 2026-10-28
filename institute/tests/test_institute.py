@@ -29,7 +29,7 @@ def client():
     SQLModel.metadata.drop_all(engine)
 
 
-STAFF = {"X-User-Role": "Staff"}
+PROFESSOR = {"X-User-Role": "Professor"}
 ARTIST = {"X-User-Role": "Artist"}
 
 INSTITUTE_BODY = {
@@ -40,7 +40,7 @@ INSTITUTE_BODY = {
 }
 
 
-def create(client, headers=STAFF, **overrides):
+def create(client, headers=PROFESSOR, **overrides):
     return client.post("/institute/", json=INSTITUTE_BODY | overrides, headers=headers)
 
 
@@ -71,7 +71,7 @@ def test_update_institute(client):
     resp = client.put(
         f"/institute/{created['id']}",
         json=INSTITUTE_BODY | {"name": "Renamed"},
-        headers=STAFF,
+        headers=PROFESSOR,
     )
     assert resp.status_code == 200
     assert resp.json()["name"] == "Renamed"
@@ -80,25 +80,34 @@ def test_update_institute(client):
 
 def test_delete_institute(client):
     created = create(client).json()
-    assert client.delete(f"/institute/{created['id']}", headers=STAFF).status_code == 200
+    assert (
+        client.delete(f"/institute/{created['id']}", headers=PROFESSOR).status_code
+        == 200
+    )
     assert client.get(f"/institute/{created['id']}").status_code == 404
-    assert client.delete(f"/institute/{created['id']}", headers=STAFF).status_code == 404
+    assert (
+        client.delete(f"/institute/{created['id']}", headers=PROFESSOR).status_code
+        == 404
+    )
 
 
 def test_update_unknown_institute(client):
-    resp = client.put("/institute/999", json=INSTITUTE_BODY, headers=STAFF)
+    resp = client.put("/institute/999", json=INSTITUTE_BODY, headers=PROFESSOR)
     assert resp.status_code == 404
 
 
-def test_mutations_require_staff_role(client):
+def test_mutations_require_professor_role(client):
     created = create(client).json()
     assert create(client, headers=ARTIST).status_code == 403
     assert create(client, headers={}).status_code == 403
-    assert client.put(
-        f"/institute/{created['id']}", json=INSTITUTE_BODY, headers=ARTIST
-    ).status_code == 403
-    assert client.delete(
-        f"/institute/{created['id']}", headers=ARTIST
-    ).status_code == 403
+    assert (
+        client.put(
+            f"/institute/{created['id']}", json=INSTITUTE_BODY, headers=ARTIST
+        ).status_code
+        == 403
+    )
+    assert (
+        client.delete(f"/institute/{created['id']}", headers=ARTIST).status_code == 403
+    )
     assert client.get(f"/institute/{created['id']}").status_code == 200
     assert client.get("/institute/").status_code == 200

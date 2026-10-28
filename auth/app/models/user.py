@@ -11,7 +11,7 @@ import enum
 
 class Role(enum.Enum):
     Artist = "Artist"
-    Staff = "Staff"
+    Professor = "Professor"
 
 
 class UserBase(SQLModel):

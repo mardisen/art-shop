@@ -145,14 +145,14 @@ def users_headers(client):
 
 
 def test_login_token_contains_role_claim(client):
-    register(client, role="Staff")
+    register(client, role="Professor")
     login = client.post(
         "/auth/login",
         data={"username": "user@example.com", "password": "secret123"},
     )
     token = login.json()["access_token"]
     payload = jwt.decode(token, "", options={"verify_signature": False})
-    assert payload["role"] == "Staff"
+    assert payload["role"] == "Professor"
     assert payload["id"] is not None
 
 
@@ -181,7 +181,7 @@ def test_users_by_id_unknown_user(client):
 
 
 def institute_choice(client, institute_id=5):
-    register(client, role="Staff")
+    register(client, role="Professor")
     headers = users_headers(client)
     return client.put("/auth/institute", json={"institute_id": institute_id}, headers=headers)
 
@@ -190,13 +190,13 @@ def decode_claim(token, claim):
     return jwt.decode(token, "", options={"verify_signature": False})[claim]
 
 
-def test_staff_chooses_institute(client):
+def test_professor_chooses_institute(client):
     resp = institute_choice(client, institute_id=5)
     assert resp.status_code == 200
     assert decode_claim(resp.json()["access_token"], "institute") == 5
 
 
-def test_staff_changes_institute(client):
+def test_professor_changes_institute(client):
     institute_choice(client, institute_id=5)
     resp = client.put(
         "/auth/institute",

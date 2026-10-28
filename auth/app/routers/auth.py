@@ -125,9 +125,9 @@ def choose_institute(
     session: SessionDep,
     current_user: Annotated[User, Depends(get_current_user)],
 ):
-    if current_user.role != Role.Staff:
+    if current_user.role != Role.Professor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Staff only"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Professor only"
         )
     current_user.institute_id = choice.institute_id
     session.add(current_user)
