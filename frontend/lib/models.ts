@@ -4,18 +4,23 @@ export enum Role {
 }
 
 export interface Workshop {
-    id: number;
     name: string;
     address: string;
     description: string;
     latitude: number;
     longitude: number;
-    link: string;
-    type: string;
-    date: Date;
+    link: string | null;
+    date: string;
 }
 
-export interface User{
+export interface WorkshopFull extends Workshop {
+    id: number;
+    type: string;
+    institute_id: number;
+    created_by: number;
+}
+
+export interface User {
     id: number;
     name: string;
     surname: string;

@@ -1,16 +1,11 @@
 "use client";
 
-import { useCallback, useContext, useEffect, useState } from "react";
-import { unauthorized, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/auth";
-import { FormField } from "@/components/FormField";
-import { Button } from "@/components/Button";
-import "leaflet/dist/leaflet.css";
 import { UserContext } from "@/lib/providers";
 import { Role } from "@/lib/models";
-
-const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
+import { WorkshopForm } from "@/components/WorkshopForm";
 
 export default function CreateWorkshopPage() {
     const router = useRouter();
@@ -19,15 +14,6 @@ export default function CreateWorkshopPage() {
     const [lat, setLat] = useState<number>(41.1171432);
     const [lng, setLng] = useState<number>(16.8718715);
     const user = useContext(UserContext);
-
-    const returnWorkshops = useCallback(
-        (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-            event.preventDefault();
-            event.stopPropagation();
-            router.push("/workshops");
-        },
-        [router]
-    );
 
     useEffect(() => {
         if (user.role != Role.Professor) router.push("/login");
@@ -40,40 +26,26 @@ export default function CreateWorkshopPage() {
                     setLat(pos.coords.latitude);
                     setLng(pos.coords.longitude);
                 },
-                () => {
-                    // keep Bari default
-                }
+                () => {},
             );
         }
     }, []);
 
-    async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-        e.preventDefault();
+    async function onSubmit(values: any) {
         setLoading(true);
         setError("");
-        const formData = new FormData(e.currentTarget);
 
         const payload = {
-            name: formData.get("name"),
-            address: formData.get("address"),
-            description: formData.get("description"),
-            link: formData.get("link") || null,
-            date: formData.get("date"),
+            ...values,
             latitude: lat,
-            longitude: lng
+            longitude: lng,
+            link: values.link || null,
         };
-
-        const { getCookieToken } = await import("@/lib/auth");
-        const token = await getCookieToken();
-        const headers: HeadersInit = { "Content-Type": "application/json" };
-        if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-        }
 
         const res = await apiFetch(`/workshop/`, {
             method: "POST",
-            headers,
-            body: JSON.stringify(payload)
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
         });
 
         if (!res.ok) {
@@ -88,56 +60,28 @@ export default function CreateWorkshopPage() {
 
     return (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-zinc-50 px-4 py-4 dark:bg-black">
-            <form
-                onSubmit={onSubmit}
-                className="min-h-0 w-full max-w-5xl flex-1 space-y-4 overflow-auto rounded-xl bg-white p-8 shadow dark:bg-zinc-900"
-            >
+            <div className="w-full max-w-5xl flex-1 min-h-0 space-y-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-semibold">Create workshop</h1>
                 </div>
-                {error && (
-                    <p className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400">
-                        {error}
-                    </p>
-                )}
-                <div className="flex w-full flex-row justify-between space-x-12">
-                    <div className="flex flex-1 flex-col space-y-2">
-                        <FormField label="Name" name="name" required />
-                        <FormField label="Address" name="address" required />
-                        <FormField label="Description" name="description" required />
-                    </div>
-                    <div className="flex flex-1 flex-col space-y-2">
-                        <FormField label="Link (optional)" name="link" />
-                        <FormField label="Date" name="date" type="date" required />
-                    </div>
-                </div>
-                <div>
-                    <p className="mb-2 text-sm font-medium">Location</p>
-                    <MapPicker
-                        lat={lat}
-                        lng={lng}
-                        onChange={(l, n) => {
-                            setLat(l);
-                            setLng(n);
-                        }}
-                    />
-                    <p className="mt-1 text-xs text-zinc-500">
-                        {lat.toFixed(6)}, {lng.toFixed(6)}
-                    </p>
-                </div>
-                <div className="flex flex-row space-x-12">
-                    <Button
-                        loading={loading}
-                        className="bg-white! text-black! hover:bg-red-500! hover:text-white!"
-                        onClick={returnWorkshops}
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" loading={loading} loadingText="Creating">
-                        Confirm
-                    </Button>
-                </div>
-            </form>
+                <WorkshopForm
+                    initialValues={{
+                        name: "",
+                        address: "",
+                        description: "",
+                        link: "",
+                        date: "",
+                        latitude: lat,
+                        longitude: lng,
+                    }}
+                    onSubmit={onSubmit}
+                    submitText="Confirm"
+                    loadingText="Creating"
+                    loading={loading}
+                    error={error}
+                    onCancel={() => router.push("/workshops")}
+                />
+            </div>
         </div>
     );
 }

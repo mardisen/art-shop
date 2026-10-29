@@ -1,9 +1,9 @@
 import { apiFetch } from "@/lib/auth";
 import Link from "next/link";
 import { Pagination } from "@/components/Pagination";
-import { Workshop } from "@/lib/models";
+import { WorkshopFull } from "@/lib/models";
 
-async function getWorkshops(): Promise<Workshop[]> {
+async function getWorkshops(): Promise<WorkshopFull[]> {
     const res = await apiFetch(`/workshop/`, { cache: "no-store" });
     if (!res.ok) return [];
     return res.json();
