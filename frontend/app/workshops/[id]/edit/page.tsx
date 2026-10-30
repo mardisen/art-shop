@@ -122,6 +122,7 @@ export default function EditWorkshopPage() {
                         date: workshop.date,
                         latitude: lat,
                         longitude: lng,
+                        type: workshop.type || "Other",
                     }}
                     onSubmit={onSubmit}
                     submitText="Save"

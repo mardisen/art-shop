@@ -11,13 +11,14 @@ export interface Workshop {
     longitude: number;
     link: string | null;
     date: string;
+    type?: string;
 }
 
 export interface WorkshopFull extends Workshop {
     id: number;
     type: string;
-    institute_id: number;
-    created_by: number;
+    institute_id: number | null;
+    created_by: number | null;
 }
 
 export interface User {

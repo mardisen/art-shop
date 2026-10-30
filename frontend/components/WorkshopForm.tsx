@@ -22,6 +22,8 @@ interface WorkshopFormProps {
     deleting?: boolean;
 }
 
+const WORKSHOP_TYPES = ["Drawing", "Painting", "Sculpture", "Photography", "Other"] as const;
+
 export function WorkshopForm({
     initialValues,
     onSubmit,
@@ -48,6 +50,7 @@ export function WorkshopForm({
             date: String(formData.get("date") || ""),
             latitude: lat,
             longitude: lng,
+            type: String(formData.get("type") || "Other"),
         });
     };
 
@@ -68,6 +71,20 @@ export function WorkshopForm({
                     <FormField label="Description" name="description" defaultValue={initialValues.description} required />
                 </div>
                 <div className="flex flex-1 flex-col space-y-2">
+                    <label className="block">
+                        <span className="block text-sm font-medium">Type</span>
+                        <select
+                            name="type"
+                            defaultValue={initialValues.type || "Other"}
+                            className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                        >
+                            {WORKSHOP_TYPES.map((t) => (
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
                     <FormField label="Link (optional)" name="link" defaultValue={initialValues.link || ""} />
                     <FormField label="Date" name="date" type="date" defaultValue={initialValues.date} required />
                 </div>

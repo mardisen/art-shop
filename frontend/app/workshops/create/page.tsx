@@ -73,6 +73,7 @@ export default function CreateWorkshopPage() {
                         date: "",
                         latitude: lat,
                         longitude: lng,
+                        type: "Other",
                     }}
                     onSubmit={onSubmit}
                     submitText="Confirm"
