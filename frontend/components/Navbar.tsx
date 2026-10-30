@@ -10,7 +10,7 @@ export function Navbar() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [role, setRole] = useState<Role>();
     const { token } = useContext(TokenContext);
-    const user = useContext(UserContext);
+    const { user } = useContext(UserContext);
 
     useEffect(() => {
         setIsAuthenticated(token != null && token.length > 0);

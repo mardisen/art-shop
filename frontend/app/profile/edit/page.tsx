@@ -9,7 +9,7 @@ import { UserContext } from "@/lib/providers";
 
 export default function EditProfilePage() {
     const router = useRouter();
-    const user = useContext(UserContext);
+    const { user, refreshUser } = useContext(UserContext);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState("");
@@ -33,14 +33,14 @@ export default function EditProfilePage() {
         const payload: any = {
             name,
             surname,
-            email,
+            email
         };
         if (password) payload.password = password;
 
         const res = await apiFetch("/auth/me", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
@@ -50,6 +50,7 @@ export default function EditProfilePage() {
             return;
         }
 
+        await refreshUser();
         router.push("/");
     }
 
@@ -66,9 +67,29 @@ export default function EditProfilePage() {
                     </p>
                 )}
                 <FormField label="Name" name="name" value={name} onChange={(e) => setName(e.target.value)} required />
-                <FormField label="Surname" name="surname" value={surname} onChange={(e) => setSurname(e.target.value)} required />
-                <FormField label="Email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <FormField label="New password (optional)" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required={false} />
+                <FormField
+                    label="Surname"
+                    name="surname"
+                    value={surname}
+                    onChange={(e) => setSurname(e.target.value)}
+                    required
+                />
+                <FormField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <FormField
+                    label="New password (optional)"
+                    name="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required={false}
+                />
                 <div className="flex gap-2">
                     <Button type="button" variant="secondary" onClick={() => router.push("/")}>
                         Cancel

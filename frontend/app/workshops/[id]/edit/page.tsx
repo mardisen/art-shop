@@ -12,7 +12,7 @@ export default function EditWorkshopPage() {
     const router = useRouter();
     const params = useParams();
     const id = params?.id;
-    const user = useContext(UserContext);
+    const { user } = useContext(UserContext);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [deleting, setDeleting] = useState(false);
