@@ -45,6 +45,14 @@ class UserResponse(BaseModel):
     surname: str
     id: int
 
+
+class UserUpdate(BaseModel):
+    name: str | None = None
+    surname: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
+
+
 class UserTokenResponse(UserResponse):
     institute_id: int | None
     role: Role
