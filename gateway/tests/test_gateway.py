@@ -19,7 +19,7 @@ def test_injects_headers_when_authenticated(client, upstream):
     forwarded = [c for c in upstream if c.url.path == "/workshop/1"]
     h = {k.lower(): v for k, v in forwarded[0].headers.items()}
     assert h["x-user-id"] == "7"
-    assert h["x-user-role"] == "Staff"
+    assert h["x-user-role"] == "Professor"
     assert h["x-institute-id"] == "3"
 
 

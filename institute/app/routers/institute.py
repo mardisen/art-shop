@@ -11,17 +11,17 @@ from app.models.institute import InstituteBase
 router = APIRouter(prefix="/institute", tags=["institute"])
 
 
-def require_staff(x_user_role: Annotated[str | None, Header()] = None):
-    if x_user_role != "Staff":
-        raise HTTPException(status_code=403, detail="Staff only")
+def require_professor(x_user_role: Annotated[str | None, Header()] = None):
+    if x_user_role != "Professor":
+        raise HTTPException(status_code=403, detail="Professor only")
 
 
-StaffDep = Annotated[None, Depends(require_staff)]
+ProfessorDep = Annotated[None, Depends(require_professor)]
 
 
 @router.post("/", status_code=201)
 def create_institute(
-    institute: InstituteBase, session: SessionDep, _: StaffDep
+    institute: InstituteBase, session: SessionDep, _: ProfessorDep
 ):
     db_institute = Institute.model_validate(institute)
     session.add(db_institute)
@@ -45,7 +45,7 @@ def get_institutes(session: SessionDep):
 
 
 @router.put("/{id}")
-def update_institute(id: int, institute: InstituteBase, session: SessionDep, _: StaffDep):
+def update_institute(id: int, institute: InstituteBase, session: SessionDep, _: ProfessorDep):
     db_institute = session.get(Institute, id)
     if not db_institute:
         raise HTTPException(status_code=404, detail="Institute not found")
@@ -58,7 +58,7 @@ def update_institute(id: int, institute: InstituteBase, session: SessionDep, _: 
 
 
 @router.delete("/{id}")
-def delete_institute(id: int, session: SessionDep, _: StaffDep):
+def delete_institute(id: int, session: SessionDep, _: ProfessorDep):
     institute = session.get(Institute, id)
     if not institute:
         raise HTTPException(status_code=404, detail="Institute not found")

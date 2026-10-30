@@ -12,7 +12,7 @@ def upstream(monkeypatch):
             if request.headers.get("authorization") or request.headers.get("Authorization"):
                 return httpx2.Response(
                     200,
-                    json={"id": 7, "role": "Staff", "institute_id": 3},
+                    json={"id": 7, "role": "Professor", "institute_id": 3},
                 )
             return httpx2.Response(401, json={"detail": "Not authenticated"})
         if request.url.path == "/auth/login":

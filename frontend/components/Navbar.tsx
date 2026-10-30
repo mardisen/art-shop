@@ -1,32 +1,34 @@
-import { apiFetch } from "@/lib/auth";
+"use client";
+
+import { Role } from "@/lib/models";
+import { TokenContext, UserContext } from "@/lib/providers";
 import Link from "next/link";
+import { useContext, useEffect, useState } from "react";
 
-interface User {
-    name: string;
-    username: string;
-    email: string;
-}
+export function Navbar() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [role, setRole] = useState<Role>();
+    const { token } = useContext(TokenContext);
+    const user = useContext(UserContext);
 
-async function getMe(): Promise<User | null> {
-    const res = await apiFetch(`/auth/me`, { cache: "no-store" });
-    const jsonBody = await res.json();
-    if (!res.ok) return null;
-    return jsonBody;
-}
+    useEffect(() => {
+        setIsAuthenticated(token != null && token.length > 0);
+    }, [token]);
 
-export async function Navbar() {
-    const isAuthenticated = (await getMe()) != null;
+    useEffect(() => {
+        setRole(user.role);
+    }, [user]);
 
     return (
-        <nav className="flex items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-800 w-full">
+        <nav className="flex w-full items-center justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
             <div>
-                <Link href="/" className="text-lg font-semibold px-3 py-1.5">
+                <Link href="/" className="px-3 py-1.5 text-lg font-semibold">
                     Art Shop
                 </Link>
                 <Link href="/workshops" className="rounded px-3 py-1.5 text-sm font-medium">
                     Workshops
                 </Link>
-                {isAuthenticated ? (
+                {isAuthenticated && role == Role.Professor ? (
                     <Link href="/workshops/create" className="rounded px-3 py-1.5 text-sm font-medium">
                         Create Workshop
                     </Link>
