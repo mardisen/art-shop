@@ -13,7 +13,7 @@ export default function CreateWorkshopPage() {
     const [loading, setLoading] = useState(false);
     const [lat, setLat] = useState<number>(41.1171432);
     const [lng, setLng] = useState<number>(16.8718715);
-    const user = useContext(UserContext);
+    const { user } = useContext(UserContext);
 
     useEffect(() => {
         if (user.role != Role.Professor) router.push("/login");

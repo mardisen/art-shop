@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useEffect, useState } from "react";
 import { apiFetch, getCookieToken } from "./auth";
 import { User } from "./models";
 
@@ -9,7 +9,10 @@ export const TokenContext = createContext({
     setToken: (token: string) => {}
 });
 
-export const UserContext = createContext<User>({} as User);
+export const UserContext = createContext<{ user: User; refreshUser: () => Promise<void> }>({
+    user: {} as User,
+    refreshUser: async () => {}
+});
 
 type Props = {
     children: ReactNode;
@@ -21,28 +24,38 @@ export default function Providers({ children }: Props) {
 
     const [user, setUser] = useState<User>({} as User);
 
-    useEffect(() => {
-        getCookieToken().then((value) => {
-            if (value && value.length > 0) setToken(value);
-        });
-    }, [getCookieToken]);
+    const refreshUser = useCallback(async () => {
+        if (!token) {
+            setUser({} as User);
+            return;
+        }
+        try {
+            const response = await apiFetch("/auth/me");
+            const value = await response.json();
+            setUser(value);
+        } catch {
+            setUser({} as User);
+        }
+    }, [token]);
 
     useEffect(() => {
-        apiFetch("/auth/me")
-            .then((response) => {
-                response
-                    .json()
-                    .then((value: User) => {
-                        setUser(value);
-                    })
-                    .catch(() => setUser({} as User));
-            })
-            .catch(() => setUser({} as User));
-    }, [token]);
+        getCookieToken().then((value) => {
+            if (value && value.length > 0) {
+                setToken(value);
+            } else {
+                setToken("");
+                setUser({} as User);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        refreshUser();
+    }, [token, refreshUser]);
 
     return (
         <TokenContext.Provider value={tokenValue}>
-            <UserContext.Provider value={user}>{children}</UserContext.Provider>
+            <UserContext.Provider value={{ user, refreshUser }}>{children}</UserContext.Provider>
         </TokenContext.Provider>
     );
 }

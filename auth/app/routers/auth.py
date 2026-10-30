@@ -1,5 +1,6 @@
 from app.models.user import UserTokenResponse
 from app.models.user import UserResponse
+from app.models.user import UserUpdate
 from jose import JWTError, jwt
 from app.database import SessionDep
 from app.models.user import UserCreate
@@ -142,6 +143,32 @@ def choose_institute(
         }
     )
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.put("/me", response_model=UserResponse)
+def update_me(
+    user_data: UserUpdate,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+
+    if user_data.email and user_data.email != current_user.email:
+        existing = session.exec(select(User).where(User.email == user_data.email)).first()
+        if existing:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        current_user.email = user_data.email
+    if user_data.name is not None:
+        current_user.name = user_data.name
+    if user_data.surname is not None:
+        current_user.surname = user_data.surname
+    if user_data.password is not None and user_data.password != "":
+        from app.utils import hash_password
+
+        current_user.password = hash_password(user_data.password)
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    return current_user
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)
