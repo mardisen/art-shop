@@ -37,18 +37,21 @@ export function Navbar() {
                 )}
                 {isAuthenticated && role == Role.Professor ? (
                     <>
+                        <Link href="/workshops/mine" className="rounded px-3 py-1.5 text-sm font-medium">
+                            Created Workshops
+                        </Link>
                         <Link href="/workshops/create" className="rounded px-3 py-1.5 text-sm font-medium">
-                            Create Workshop
+                            Add Workshop
                         </Link>
                         <Link href="/institutes/create" className="rounded px-3 py-1.5 text-sm font-medium">
-                            Create Institute
+                            Add Institute
                         </Link>
                         {(user as any)?.institute_id != null ? (
                             <Link
                                 href={`/institutes/${(user as any).institute_id}/edit`}
                                 className="rounded px-3 py-1.5 text-sm font-medium"
                             >
-                                My Institute
+                                Edit Institute
                             </Link>
                         ) : (
                             <></>
