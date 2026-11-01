@@ -3,10 +3,9 @@
 import { apiFetch } from "@/lib/auth";
 import { Pagination } from "@/components/Pagination";
 import { WorkshopFull } from "@/lib/models";
-import { useContext, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { WorkshopFilters } from "@/components/WorkshopFilters";
-import { UserContext } from "@/lib/providers";
 import { WorkshopListItem } from "@/components/WorkshopListItem";
 
 const ITEMS_PER_PAGE = 10;
@@ -14,9 +13,8 @@ const ITEMS_PER_PAGE = 10;
 const BARI_LAT = 41.1171432;
 const BARI_LNG = 16.8718715;
 
-export default function WorkshopsPage() {
+function WorkshopsContent() {
     const searchParams = useSearchParams();
-    const { user } = useContext(UserContext);
     const [workshops, setWorkshops] = useState<WorkshopFull[]>([]);
     const [loading, setLoading] = useState(true);
     const [type, setType] = useState(searchParams.get("type") || "");
@@ -24,8 +22,6 @@ export default function WorkshopsPage() {
     const [distance, setDistance] = useState(searchParams.get("distance") || "");
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
-    const [useGeo, setUseGeo] = useState(false);
-    const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         if (typeof navigator !== "undefined" && navigator.geolocation) {
@@ -33,22 +29,17 @@ export default function WorkshopsPage() {
                 (pos) => {
                     setLat(pos.coords.latitude);
                     setLng(pos.coords.longitude);
-                    setUseGeo(true);
                 },
                 () => {
                     setLat(BARI_LAT);
                     setLng(BARI_LNG);
-                    setUseGeo(false);
                 },
             );
         } else {
             setLat(BARI_LAT);
             setLng(BARI_LNG);
-            setUseGeo(false);
         }
     }, []);
-
-
 
     useEffect(() => {
         async function fetchWorkshops() {
@@ -80,12 +71,6 @@ export default function WorkshopsPage() {
         }
     }, [type, search, distance, lat, lng]);
 
-    const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
-    const totalPages = Math.max(1, Math.ceil(workshops.length / ITEMS_PER_PAGE));
-    const page = Math.min(currentPage, totalPages);
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const paginatedWorkshops = workshops.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
     const buildBasePath = () => {
         const params = new URLSearchParams();
         if (type) params.set("type", type);
@@ -94,6 +79,12 @@ export default function WorkshopsPage() {
         const qs = params.toString();
         return qs ? `/workshops?${qs}` : "/workshops";
     };
+
+    const totalPages = Math.max(1, Math.ceil(workshops.length / ITEMS_PER_PAGE));
+    const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const page = Math.min(currentPage, totalPages);
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const paginatedWorkshops = workshops.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-zinc-50 px-38 py-10 dark:bg-black">
@@ -105,7 +96,7 @@ export default function WorkshopsPage() {
                 onTypeChange={setType}
                 distance={distance}
                 onDistanceChange={setDistance}
-                useGeo={useGeo}
+                useGeo={true}
             />
             <div className="mb-4 min-h-0 w-full flex-1 items-start overflow-y-auto rounded-xl bg-white px-8 py-2 shadow dark:bg-zinc-900">
                 {loading ? (
@@ -128,5 +119,13 @@ export default function WorkshopsPage() {
                 itemsPerPage={ITEMS_PER_PAGE}
             />
         </div>
+    );
+}
+
+export default function WorkshopsPage() {
+    return (
+        <Suspense fallback={<div className="flex flex-1 items-center justify-center">Loading...</div>}>
+            <WorkshopsContent />
+        </Suspense>
     );
 }
