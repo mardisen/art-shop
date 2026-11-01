@@ -1,15 +1,13 @@
 "use client";
 
 import { apiFetch } from "@/lib/auth";
-import Link from "next/link";
 import { Pagination } from "@/components/Pagination";
 import { WorkshopFull } from "@/lib/models";
 import { useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { WorkshopFilters } from "@/components/WorkshopFilters";
-import { connection } from "next/server";
 import { UserContext } from "@/lib/providers";
-import { BookmarkButton } from "@/components/BookmarkButton";
+import { WorkshopListItem } from "@/components/WorkshopListItem";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -117,32 +115,7 @@ export default function WorkshopsPage() {
                 ) : (
                     <ul className="w-full divide-y divide-zinc-200 px-4 dark:divide-zinc-800">
                         {paginatedWorkshops.map((w) => (
-                            <li key={w.id} className="py-4">
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-lg font-medium">{w.name}</h2>
-                                    <div className="flex items-center gap-2">
-                                        <BookmarkButton workshopId={w.id} />
-                                        {w.created_by && user?.id && w.created_by === user.id && (
-                                            <Link href={`/workshops/${w.id}/edit`} className="text-sm underline">
-                                                Edit
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
-                                <p className="mt-1 text-sm text-zinc-500">{w.address}</p>
-                                <p className="mt-1 text-xs text-zinc-400">{w.type}</p>
-                                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{w.description}</p>
-                                {w.link && (
-                                    <Link
-                                        href={w.link.startsWith("http") ? w.link : `https://${w.link}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-3 inline-block text-sm font-medium underline"
-                                    >
-                                        Visit website
-                                    </Link>
-                                )}
-                            </li>
+                            <WorkshopListItem key={w.id} workshop={w} />
                         ))}
                     </ul>
                 )}
