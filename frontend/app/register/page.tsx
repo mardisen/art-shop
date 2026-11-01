@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { API_URL } from "../../lib/auth";
 import { FormField } from "../../components/FormField";
 import { Button } from "../../components/Button";
+import { apiFetch } from "@/lib/auth";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -18,10 +18,10 @@ export default function RegisterPage() {
         setError("");
         const data = Object.fromEntries(new FormData(e.currentTarget));
 
-        const res = await fetch(`${API_URL}/auth/register`, {
+        const res = await apiFetch("/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
+            body: JSON.stringify(data)
         });
 
         if (!res.ok) {

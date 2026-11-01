@@ -1,0 +1,217 @@
+x-db: &db
+  image: postgres
+  restart: always
+  shm_size: 128mb
+  environment:
+    POSTGRES_USER: example
+    POSTGRES_PASSWORD: example
+    POSTGRES_DB: fastapi
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U example -d fastapi"]
+    interval: 20s
+    timeout: 5s
+    retries: 5
+
+x-api: &api
+  restart: always
+  healthcheck:
+    test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:80/')\""]
+    interval: 30s
+    timeout: 5s
+    retries: 5
+    start_period: 20s
+
+x-seed: &seed
+    restart: "no"
+    entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
+
+
+services:
+  auth-db:
+    <<: *db
+    container_name: auth-postgres
+    ports:
+      - 5432:5432
+    networks:
+    - auth
+
+  auth:
+    <<: *api
+    container_name: auth-api
+    image: artshop/auth
+    build:
+      context: ./auth
+      dockerfile: ./Dockerfile
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    ports:
+      - 8001:80
+    networks:
+    - auth
+    - public
+  
+  auth_seed:
+    <<: *seed
+    image: artshop/auth
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    build:
+      context: auth
+      dockerfile: ./Dockerfile
+    networks:
+      - auth
+
+  bookmark-db:
+    <<: *db
+    container_name: bookmark-postgres
+    ports:
+      - 5432:5432
+    networks:
+    - bookmark
+
+  bookmark:
+    <<: *api
+    container_name: bookmark-api
+    image: artshop/bookmark
+    build:
+      context: ./bookmark
+      dockerfile: ./Dockerfile
+    depends_on:
+      bookmark-db:
+        condition: service_healthy
+    ports:
+      - 8002:80
+    networks:
+    - bookmark
+    - public
+
+  bookmark_seed:
+    <<: *seed
+    image: artshop/bookmark
+    depends_on:
+      bookmark-db:
+        condition: service_healthy
+      bookmark:
+        condition: service_healthy
+    build:
+      context: bookmark
+      dockerfile: ./Dockerfile
+    networks:
+      - bookmark
+
+  institute-db:
+    <<: *db
+    container_name: institute-postgres
+    ports:
+      - 5432:5432
+    networks:
+    - institute
+
+  institute:
+    <<: *api
+    container_name: institute-api
+    image: artshop/institute
+    build:
+      context: ./institute
+      dockerfile: ./Dockerfile
+    depends_on:
+      institute-db:
+        condition: service_healthy
+    ports:
+      - 8003:80
+    networks:
+    - institute
+    - public
+
+  institute_seed:
+    <<: *seed
+    image: artshop/institute
+    depends_on:
+      institute-db:
+        condition: service_healthy
+      institute:
+        condition: service_healthy
+    build:
+      context: institute
+      dockerfile: ./Dockerfile
+    networks:
+      - institute
+
+  workshop-db:
+    <<: *db
+    container_name: workshop-postgres
+    ports:
+      - 5432:5432
+    networks:
+    - workshop
+
+  workshop:
+    <<: *api
+    container_name: workshop-api
+    image: artshop/workshop
+    build:
+      context: ./workshop
+      dockerfile: ./Dockerfile
+    depends_on:
+      workshop-db:
+        condition: service_healthy
+    ports:
+      - 8004:80
+    networks:
+    - workshop
+    - public
+  
+  workshop_seed:
+    <<: *seed
+    image: artshop/workshop
+    depends_on:
+      workshop-db:
+        condition: service_healthy
+      workshop:
+        condition: service_healthy
+    build:
+      context: workshop
+      dockerfile: ./Dockerfile
+    networks:
+      - workshop
+  
+  gateway:
+    <<: *api
+    container_name: gateway
+    image: artshop/gateway
+    build:
+      context: ./gateway
+      dockerfile: ./Dockerfile
+    depends_on:
+      auth:
+        condition: service_healthy
+      bookmark:
+        condition: service_healthy
+      institute:
+        condition: service_healthy
+      workshop:
+        condition: service_healthy
+    ports:
+      - 8000:80
+    networks:
+    - public
+
+networks:
+  auth:
+    driver: bridge
+    internal: true
+  bookmark:
+    driver: bridge
+    internal: true
+  institute:
+    driver: bridge
+    internal: true
+  workshop:
+    driver: bridge
+    internal: true
+  public:
+    driver: bridge

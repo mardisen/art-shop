@@ -4,11 +4,13 @@ export function FormField({
     label,
     name,
     type = "text",
+    required = false,
     ...rest
 }: {
     label: string;
     name: string;
     type?: string;
+    required?: boolean;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <label className="block">
@@ -16,7 +18,7 @@ export function FormField({
             <input
                 name={name}
                 type={type}
-                required
+                required={required}
                 className="input"
                 {...rest}
             />

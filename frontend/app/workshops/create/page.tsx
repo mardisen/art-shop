@@ -1,51 +1,88 @@
-import { API_URL } from "@/lib/auth";
-import Link from "next/link";
+"use client";
 
-interface Workshop {
-    id: number;
-    name: string;
-    address: string;
-    description: string;
-    latitude: number;
-    longitude: number;
-    link: string;
-}
+import { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/auth";
+import { UserContext } from "@/lib/providers";
+import { Role } from "@/lib/models";
+import { WorkshopForm } from "@/components/WorkshopForm";
 
-async function getWorkshops(): Promise<Workshop[]> {
-    const res = await fetch(`${API_URL}/workshop/`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
-}
+export default function CreateWorkshopPage() {
+    const router = useRouter();
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [lat, setLat] = useState<number>(41.1171432);
+    const [lng, setLng] = useState<number>(16.8718715);
+    const { user } = useContext(UserContext);
 
-export default async function WorkshopsPage() {
-    const workshops = await getWorkshops();
+    useEffect(() => {
+        if (user.role != Role.Professor) router.push("/login");
+    }, [user]);
+
+    useEffect(() => {
+        if (typeof navigator !== "undefined" && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLat(pos.coords.latitude);
+                    setLng(pos.coords.longitude);
+                },
+                () => {},
+            );
+        }
+    }, []);
+
+    async function onSubmit(values: any) {
+        setLoading(true);
+        setError("");
+
+        const payload = {
+            ...values,
+            latitude: lat,
+            longitude: lng,
+            link: values.link || null,
+        };
+
+        const res = await apiFetch(`/workshop/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            setError(body.detail ?? "Workshop creation failed");
+            setLoading(false);
+            return;
+        }
+
+        router.push("/workshops");
+    }
 
     return (
-        <div className="flex flex-col flex-1 items-start bg-zinc-50 px-12 py-10 dark:bg-black w-full">
-            <h1 className="mb-6 text-2xl font-semibold">Workshops</h1>
-            {workshops.length === 0 ? (
-                <p className="text-zinc-500 px-4">No workshops found.</p>
-            ) : (
-                <ul className="w-full px-4 w-full divide-y divide-zinc-200 dark:divide-zinc-800">
-                    {workshops.map((w) => (
-                        <li key={w.id} className="py-4">
-                            <h2 className="text-lg font-medium">{w.name}</h2>
-                            <p className="mt-1 text-sm text-zinc-500">{w.address}</p>
-                            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{w.description}</p>
-                            {w.link && (
-                                <Link
-                                    href={w.link.startsWith("http") ? w.link : `https://${w.link}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-3 inline-block text-sm font-medium underline"
-                                >
-                                    Visit website
-                                </Link>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            )}
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center bg-zinc-50 px-4 py-4 dark:bg-black">
+            <div className="w-full max-w-5xl flex-1 min-h-0 space-y-4">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold">Create workshop</h1>
+                </div>
+                <WorkshopForm
+                    initialValues={{
+                        name: "",
+                        address: "",
+                        description: "",
+                        link: "",
+                        date: "",
+                        latitude: lat,
+                        longitude: lng,
+                        type: "Other",
+                    }}
+                    onSubmit={onSubmit}
+                    submitText="Confirm"
+                    loadingText="Creating"
+                    loading={loading}
+                    error={error}
+                    onCancel={() => router.push("/workshops")}
+                />
+            </div>
         </div>
     );
 }
