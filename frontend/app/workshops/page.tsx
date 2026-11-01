@@ -4,19 +4,21 @@ import { apiFetch } from "@/lib/auth";
 import Link from "next/link";
 import { Pagination } from "@/components/Pagination";
 import { WorkshopFull } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { WorkshopFilters } from "@/components/WorkshopFilters";
 import { connection } from "next/server";
+import { UserContext } from "@/lib/providers";
+import { BookmarkButton } from "@/components/BookmarkButton";
 
 const ITEMS_PER_PAGE = 10;
 
 const BARI_LAT = 41.1171432;
 const BARI_LNG = 16.8718715;
 
-export default async function WorkshopsPage() {
-    await connection();
+export default function WorkshopsPage() {
     const searchParams = useSearchParams();
+    const { user } = useContext(UserContext);
     const [workshops, setWorkshops] = useState<WorkshopFull[]>([]);
     const [loading, setLoading] = useState(true);
     const [type, setType] = useState(searchParams.get("type") || "");
@@ -25,6 +27,7 @@ export default async function WorkshopsPage() {
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
     const [useGeo, setUseGeo] = useState(false);
+    const [bookmarks, setBookmarks] = useState<Set<number>>(new Set());
 
     useEffect(() => {
         if (typeof navigator !== "undefined" && navigator.geolocation) {
@@ -46,6 +49,8 @@ export default async function WorkshopsPage() {
             setUseGeo(false);
         }
     }, []);
+
+
 
     useEffect(() => {
         async function fetchWorkshops() {
@@ -69,7 +74,7 @@ export default async function WorkshopsPage() {
                 return;
             }
             const data = await res.json();
-            setWorkshops(data);
+            setWorkshops(Array.isArray(data) ? data : []);
             setLoading(false);
         }
         if (lat !== null && lng !== null) {
@@ -115,11 +120,14 @@ export default async function WorkshopsPage() {
                             <li key={w.id} className="py-4">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-medium">{w.name}</h2>
-                                    {w.created_by && (
-                                        <Link href={`/workshops/${w.id}/edit`} className="text-sm underline">
-                                            Edit
-                                        </Link>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        <BookmarkButton workshopId={w.id} />
+                                        {w.created_by && user?.id && w.created_by === user.id && (
+                                            <Link href={`/workshops/${w.id}/edit`} className="text-sm underline">
+                                                Edit
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
                                 <p className="mt-1 text-sm text-zinc-500">{w.address}</p>
                                 <p className="mt-1 text-xs text-zinc-400">{w.type}</p>
