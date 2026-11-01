@@ -7,13 +7,15 @@ import { WorkshopFull } from "@/lib/models";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { WorkshopFilters } from "@/components/WorkshopFilters";
+import { connection } from "next/server";
 
 const ITEMS_PER_PAGE = 10;
 
 const BARI_LAT = 41.1171432;
 const BARI_LNG = 16.8718715;
 
-export default function WorkshopsPage() {
+export default async function WorkshopsPage() {
+    await connection();
     const searchParams = useSearchParams();
     const [workshops, setWorkshops] = useState<WorkshopFull[]>([]);
     const [loading, setLoading] = useState(true);

@@ -1,0 +1,22 @@
+name: Test build Docker
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build the stack
+        run: docker compose up -d --build
+      - name: 'Wait until the container is healthy'
+        uses: raschmitt/wait-for-healthy-container/@master
+        with:
+          container-name: gateway
+          timeout: 300

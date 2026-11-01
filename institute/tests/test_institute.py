@@ -68,10 +68,12 @@ def test_list_and_read_institute(client):
 
 def test_update_institute(client):
     created = create(client).json()
+    id = created["id"]
+    headers = {**PROFESSOR, "X-Institute-Id": str(id)}
     resp = client.put(
         f"/institute/{created['id']}",
         json=INSTITUTE_BODY | {"name": "Renamed"},
-        headers=PROFESSOR,
+        headers=headers,
     )
     assert resp.status_code == 200
     assert resp.json()["name"] == "Renamed"
@@ -80,14 +82,14 @@ def test_update_institute(client):
 
 def test_delete_institute(client):
     created = create(client).json()
+    id = created["id"]
+    headers = {**PROFESSOR, "X-Institute-Id": str(id)}
     assert (
-        client.delete(f"/institute/{created['id']}", headers=PROFESSOR).status_code
-        == 200
+        client.delete(f"/institute/{created['id']}", headers=headers).status_code == 200
     )
     assert client.get(f"/institute/{created['id']}").status_code == 404
     assert (
-        client.delete(f"/institute/{created['id']}", headers=PROFESSOR).status_code
-        == 404
+        client.delete(f"/institute/{created['id']}", headers=headers).status_code == 404
     )
 
 
