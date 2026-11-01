@@ -31,9 +31,14 @@ export function Navbar() {
                     Workshops
                 </Link>
                 {isAuthenticated && role == Role.Professor ? (
-                    <Link href="/workshops/create" className="rounded px-3 py-1.5 text-sm font-medium">
-                        Create Workshop
-                    </Link>
+                    <>
+                        <Link href="/workshops/create" className="rounded px-3 py-1.5 text-sm font-medium">
+                            Create Workshop
+                        </Link>
+                        <Link href="/institutes/create" className="rounded px-3 py-1.5 text-sm font-medium">
+                            Create Institute
+                        </Link>
+                    </>
                 ) : (
                     <></>
                 )}
