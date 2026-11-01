@@ -35,14 +35,18 @@ export function Navbar() {
                         <Link href="/workshops/create" className="rounded px-3 py-1.5 text-sm font-medium">
                             Create Workshop
                         </Link>
-                        {(user as any)?.institute_id ? (
-                            <Link href={`/institutes/${(user as any).institute_id}/edit`} className="rounded px-3 py-1.5 text-sm font-medium">
+                        <Link href="/institutes/create" className="rounded px-3 py-1.5 text-sm font-medium">
+                            Create Institute
+                        </Link>
+                        {(user as any)?.institute_id != null ? (
+                            <Link
+                                href={`/institutes/${(user as any).institute_id}/edit`}
+                                className="rounded px-3 py-1.5 text-sm font-medium"
+                            >
                                 My Institute
                             </Link>
                         ) : (
-                            <Link href="/institutes/create" className="rounded px-3 py-1.5 text-sm font-medium">
-                                Create Institute
-                            </Link>
+                            <></>
                         )}
                     </>
                 ) : (
@@ -52,7 +56,10 @@ export function Navbar() {
             <div className="flex items-center gap-3">
                 {isAuthenticated ? (
                     <>
-                        <Link href="/profile/edit" className="rounded px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                        <Link
+                            href="/profile/edit"
+                            className="rounded px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        >
                             Profile
                         </Link>
                         <Link
