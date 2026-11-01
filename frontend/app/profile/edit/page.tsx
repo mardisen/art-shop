@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/auth";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/Button";
 import { UserContext } from "@/lib/providers";
+import { Role } from "@/lib/models";
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -16,12 +17,15 @@ export default function EditProfilePage() {
     const [surname, setSurname] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [institutes, setInstitutes] = useState<any[]>([]);
+    const [instituteId, setInstituteId] = useState<string>("");
 
     useEffect(() => {
         if (user) {
             setName(user.name || "");
             setSurname(user.surname || "");
             setEmail(user.email || "");
+            if (user.institute_id != null) setInstituteId(String(user.institute_id));
         }
     }, [user]);
 
@@ -50,9 +54,32 @@ export default function EditProfilePage() {
             return;
         }
 
+        if (user?.role === Role.Professor && instituteId !== "") {
+            try {
+                await apiFetch("/auth/institute", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ institute_id: instituteId != null ? Number(instituteId) : null }),
+                });
+            } catch {}
+        }
+
         await refreshUser();
         router.push("/");
     }
+
+    useEffect(() => {
+        async function loadInstitutes() {
+            try {
+                const res = await apiFetch("/institute/");
+                if (res.ok) {
+                    const data = await res.json();
+                    setInstitutes(Array.isArray(data) ? data : []);
+                }
+            } catch {}
+        }
+        loadInstitutes();
+    }, []);
 
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-zinc-50 px-4 pt-8 pb-4 dark:bg-black">
@@ -90,6 +117,23 @@ export default function EditProfilePage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required={false}
                 />
+                {user?.role === Role.Professor && (
+                    <label className="block">
+                        <span className="block text-sm font-medium">Institute</span>
+                        <select
+                            value={instituteId}
+                            onChange={(e) => setInstituteId(e.target.value)}
+                            className="input"
+                        >
+                            <option value="">None</option>
+                            {institutes.map((inst: any) => (
+                                <option key={inst.id} value={inst.id}>
+                                    {inst.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                )}
                 <div className="flex gap-2">
                     <Button type="button" variant="secondary" onClick={() => router.push("/")}>
                         Cancel
