@@ -36,7 +36,7 @@ export default function EditInstitutePage() {
         load();
     }, [id]);
 
-    if (user?.role !== Role.Professor) {
+    if (user?.role !== Role.Professor || String(user?.institute_id) !== String(id)) {
         return (
             <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
                 <p>Not authorized</p>
