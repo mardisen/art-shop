@@ -1,21 +1,19 @@
 "use client";
 
 import { apiFetch } from "@/lib/auth";
-import Link from "next/link";
 import { Pagination } from "@/components/Pagination";
 import { WorkshopFull } from "@/lib/models";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { WorkshopFilters } from "@/components/WorkshopFilters";
-import { connection } from "next/server";
+import { WorkshopListItem } from "@/components/WorkshopListItem";
 
 const ITEMS_PER_PAGE = 10;
 
 const BARI_LAT = 41.1171432;
 const BARI_LNG = 16.8718715;
 
-export default async function WorkshopsPage() {
-    await connection();
+function WorkshopsContent() {
     const searchParams = useSearchParams();
     const [workshops, setWorkshops] = useState<WorkshopFull[]>([]);
     const [loading, setLoading] = useState(true);
@@ -24,7 +22,6 @@ export default async function WorkshopsPage() {
     const [distance, setDistance] = useState(searchParams.get("distance") || "");
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
-    const [useGeo, setUseGeo] = useState(false);
 
     useEffect(() => {
         if (typeof navigator !== "undefined" && navigator.geolocation) {
@@ -32,18 +29,15 @@ export default async function WorkshopsPage() {
                 (pos) => {
                     setLat(pos.coords.latitude);
                     setLng(pos.coords.longitude);
-                    setUseGeo(true);
                 },
                 () => {
                     setLat(BARI_LAT);
                     setLng(BARI_LNG);
-                    setUseGeo(false);
                 },
             );
         } else {
             setLat(BARI_LAT);
             setLng(BARI_LNG);
-            setUseGeo(false);
         }
     }, []);
 
@@ -69,19 +63,13 @@ export default async function WorkshopsPage() {
                 return;
             }
             const data = await res.json();
-            setWorkshops(data);
+            setWorkshops(Array.isArray(data) ? data : []);
             setLoading(false);
         }
         if (lat !== null && lng !== null) {
             fetchWorkshops();
         }
     }, [type, search, distance, lat, lng]);
-
-    const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
-    const totalPages = Math.max(1, Math.ceil(workshops.length / ITEMS_PER_PAGE));
-    const page = Math.min(currentPage, totalPages);
-    const startIndex = (page - 1) * ITEMS_PER_PAGE;
-    const paginatedWorkshops = workshops.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     const buildBasePath = () => {
         const params = new URLSearchParams();
@@ -91,6 +79,12 @@ export default async function WorkshopsPage() {
         const qs = params.toString();
         return qs ? `/workshops?${qs}` : "/workshops";
     };
+
+    const totalPages = Math.max(1, Math.ceil(workshops.length / ITEMS_PER_PAGE));
+    const currentPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const page = Math.min(currentPage, totalPages);
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const paginatedWorkshops = workshops.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-zinc-50 px-38 py-10 dark:bg-black">
@@ -102,7 +96,7 @@ export default async function WorkshopsPage() {
                 onTypeChange={setType}
                 distance={distance}
                 onDistanceChange={setDistance}
-                useGeo={useGeo}
+                useGeo={true}
             />
             <div className="mb-4 min-h-0 w-full flex-1 items-start overflow-y-auto rounded-xl bg-white px-8 py-2 shadow dark:bg-zinc-900">
                 {loading ? (
@@ -112,29 +106,7 @@ export default async function WorkshopsPage() {
                 ) : (
                     <ul className="w-full divide-y divide-zinc-200 px-4 dark:divide-zinc-800">
                         {paginatedWorkshops.map((w) => (
-                            <li key={w.id} className="py-4">
-                                <div className="flex items-center justify-between">
-                                    <h2 className="text-lg font-medium">{w.name}</h2>
-                                    {w.created_by && (
-                                        <Link href={`/workshops/${w.id}/edit`} className="text-sm underline">
-                                            Edit
-                                        </Link>
-                                    )}
-                                </div>
-                                <p className="mt-1 text-sm text-zinc-500">{w.address}</p>
-                                <p className="mt-1 text-xs text-zinc-400">{w.type}</p>
-                                <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">{w.description}</p>
-                                {w.link && (
-                                    <Link
-                                        href={w.link.startsWith("http") ? w.link : `https://${w.link}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-3 inline-block text-sm font-medium underline"
-                                    >
-                                        Visit website
-                                    </Link>
-                                )}
-                            </li>
+                            <WorkshopListItem key={w.id} workshop={w} />
                         ))}
                     </ul>
                 )}
@@ -147,5 +119,13 @@ export default async function WorkshopsPage() {
                 itemsPerPage={ITEMS_PER_PAGE}
             />
         </div>
+    );
+}
+
+export default function WorkshopsPage() {
+    return (
+        <Suspense fallback={<div className="flex flex-1 items-center justify-center">Loading...</div>}>
+            <WorkshopsContent />
+        </Suspense>
     );
 }

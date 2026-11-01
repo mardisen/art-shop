@@ -32,6 +32,11 @@ def save_bookmark(bookmark: BookmarkBase, session: SessionDep, caller_id: Caller
     return db_bookmark
 
 
+@router.get("/")
+def list_bookmarks(session: SessionDep, caller_id: CallerDep):
+    return session.exec(select(Bookmark).where(Bookmark.user_id == caller_id)).all()
+
+
 @router.delete("/{workshop_id}")
 def remove_bookmark(workshop_id: int, session: SessionDep, caller_id: CallerDep):
     bookmark = session.get(Bookmark, (caller_id, workshop_id))
