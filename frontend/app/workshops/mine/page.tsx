@@ -56,9 +56,9 @@ export default function MyWorkshopsPage() {
                     <p className="px-4 text-zinc-500">No workshops.</p>
                 ) : (
                     <ul className="w-full divide-y divide-zinc-200 px-4 dark:divide-zinc-800">
-                        {workshops.map((w) => (
-                            <WorkshopListItem key={w.id} workshop={w} />
-                        ))}
+                {workshops.map((w) => (
+                    <WorkshopListItem key={w.id} workshop={w} showDelete />
+                ))}
                     </ul>
                 )}
             </div>

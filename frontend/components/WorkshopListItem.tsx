@@ -3,11 +3,27 @@
 import Link from "next/link";
 import { BookmarkButton } from "@/components/BookmarkButton";
 import { WorkshopFull } from "@/lib/models";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { UserContext } from "@/lib/providers";
+import { apiFetch } from "@/lib/auth";
 
-export function WorkshopListItem({ workshop }: { workshop: WorkshopFull }) {
-    const { user } = useContext(UserContext);
+export function WorkshopListItem({ workshop, showDelete = false }: { workshop: WorkshopFull; showDelete?: boolean }) {
+    const userContext = useContext(UserContext);
+    const user = (userContext as any).user ?? (userContext as any);
+    const [deleting, setDeleting] = useState(false);
+    const [hidden, setHidden] = useState(false);
+
+    async function onDelete() {
+        if (!confirm("Delete this workshop?")) return;
+        setDeleting(true);
+        const res = await apiFetch(`/workshop/${workshop.id}`, { method: "DELETE" });
+        if (res.ok) {
+            setHidden(true);
+        }
+        setDeleting(false);
+    }
+
+    if (hidden) return null;
 
     return (
         <li className="py-4">
@@ -16,9 +32,16 @@ export function WorkshopListItem({ workshop }: { workshop: WorkshopFull }) {
                 <div className="flex items-center gap-2">
                     <BookmarkButton workshopId={workshop.id} />
                     {workshop.created_by && user?.id && workshop.created_by === user.id && (
-                        <Link href={`/workshops/${workshop.id}/edit`} className="text-sm underline">
-                            Edit
-                        </Link>
+                        <>
+                            <Link href={`/workshops/${workshop.id}/edit`} className="text-sm underline">
+                                Edit
+                            </Link>
+                            {showDelete && (
+                                <button onClick={onDelete} disabled={deleting} className="text-sm text-red-600 underline">
+                                    {deleting ? "Deleting" : "Delete"}
+                                </button>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
