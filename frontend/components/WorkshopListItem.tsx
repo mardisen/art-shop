@@ -7,7 +7,7 @@ import { useContext, useState } from "react";
 import { UserContext } from "@/lib/providers";
 import { apiFetch } from "@/lib/auth";
 
-export function WorkshopListItem({ workshop, showDelete = false }: { workshop: WorkshopFull; showDelete?: boolean }) {
+export function WorkshopListItem({ workshop, showDelete = false, showEdit = false, showBookmark = true }: { workshop: WorkshopFull; showDelete?: boolean; showEdit?: boolean; showBookmark?: boolean }) {
     const userContext = useContext(UserContext);
     const user = (userContext as any).user ?? (userContext as any);
     const [deleting, setDeleting] = useState(false);
@@ -30,12 +30,14 @@ export function WorkshopListItem({ workshop, showDelete = false }: { workshop: W
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-medium">{workshop.name}</h2>
                 <div className="flex items-center gap-2">
-                    <BookmarkButton workshopId={workshop.id} />
+                    {showBookmark && <BookmarkButton workshopId={workshop.id} />}
                     {workshop.created_by && user?.id && workshop.created_by === user.id && (
                         <>
-                            <Link href={`/workshops/${workshop.id}/edit`} className="text-sm underline">
-                                Edit
-                            </Link>
+                            {showEdit && (
+                                <Link href={`/workshops/${workshop.id}/edit`} className="text-sm underline">
+                                    Edit
+                                </Link>
+                            )}
                             {showDelete && (
                                 <button onClick={onDelete} disabled={deleting} className="text-sm text-red-600 underline">
                                     {deleting ? "Deleting" : "Delete"}

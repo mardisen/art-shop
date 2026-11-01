@@ -57,7 +57,7 @@ export default function MyWorkshopsPage() {
                 ) : (
                     <ul className="w-full divide-y divide-zinc-200 px-4 dark:divide-zinc-800">
                 {workshops.map((w) => (
-                    <WorkshopListItem key={w.id} workshop={w} showDelete />
+                    <WorkshopListItem key={w.id} workshop={w} showDelete showEdit showBookmark={false} />
                 ))}
                     </ul>
                 )}
