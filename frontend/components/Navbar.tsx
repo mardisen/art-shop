@@ -35,9 +35,15 @@ export function Navbar() {
                         <Link href="/workshops/create" className="rounded px-3 py-1.5 text-sm font-medium">
                             Create Workshop
                         </Link>
-                        <Link href="/institutes/create" className="rounded px-3 py-1.5 text-sm font-medium">
-                            Create Institute
-                        </Link>
+                        {(user as any)?.institute_id ? (
+                            <Link href={`/institutes/${(user as any).institute_id}/edit`} className="rounded px-3 py-1.5 text-sm font-medium">
+                                My Institute
+                            </Link>
+                        ) : (
+                            <Link href="/institutes/create" className="rounded px-3 py-1.5 text-sm font-medium">
+                                Create Institute
+                            </Link>
+                        )}
                     </>
                 ) : (
                     <></>
