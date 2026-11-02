@@ -12,6 +12,7 @@ export default function WorkshopDetailPage() {
     const [workshop, setWorkshop] = useState<WorkshopFull | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [institute, setInstitute] = useState<any>(null);
 
     useEffect(() => {
         async function load() {
@@ -24,6 +25,14 @@ export default function WorkshopDetailPage() {
             }
             const data = await res.json();
             setWorkshop(data);
+            if (data.institute_id) {
+                try {
+                    const ires = await apiFetch(`/institute/${data.institute_id}`, { cache: "no-store" });
+                    if (ires.ok) {
+                        setInstitute(await ires.json());
+                    }
+                } catch {}
+            }
             setLoading(false);
         }
         load();
@@ -63,6 +72,24 @@ export default function WorkshopDetailPage() {
                     >
                         Visit website
                     </Link>
+                )}
+                {institute && (
+                    <div className="mt-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                        <h2 className="text-lg font-medium">Institute</h2>
+                        <p className="text-sm font-medium">{institute.name}</p>
+                        {institute.address && <p className="text-sm text-zinc-600 dark:text-zinc-400">{institute.address}</p>}
+                        {institute.description && <p className="mt-1 text-sm">{institute.description}</p>}
+                        {institute.link && (
+                            <Link
+                                href={institute.link.startsWith("http") ? institute.link : `https://${institute.link}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 inline-block text-sm underline"
+                            >
+                                Institute website
+                            </Link>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
