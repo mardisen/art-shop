@@ -74,20 +74,20 @@ export default function EditInstitutePage() {
         router.push("/");
     }
 
-    async function onDelete() {
-        if (!id) return;
-        if (!confirm("Delete this institute?")) return;
-        setDeleting(true);
-        setError("");
-        const res = await apiFetch(`/institute/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            setError(body.detail ?? "Institute deletion failed");
-            setDeleting(false);
-            return;
-        }
-        router.push("/");
-    }
+    // async function onDelete() {
+    //     if (!id) return;
+    //     if (!confirm("Delete this institute?")) return;
+    //     setDeleting(true);
+    //     setError("");
+    //     const res = await apiFetch(`/institute/${id}`, { method: "DELETE" });
+    //     if (!res.ok) {
+    //         const body = await res.json().catch(() => ({}));
+    //         setError(body.detail ?? "Institute deletion failed");
+    //         setDeleting(false);
+    //         return;
+    //     }
+    //     router.push("/");
+    // }
 
     if (fetching) {
         return (
@@ -125,9 +125,9 @@ export default function EditInstitutePage() {
                     <Button type="button" variant="secondary" onClick={() => router.push("/")}>
                         Cancel
                     </Button>
-                    <Button type="button" variant="danger" loading={deleting} loadingText="Deleting" onClick={onDelete}>
+                    {/* <Button type="button" variant="danger" loading={deleting} loadingText="Deleting" onClick={onDelete}>
                         Delete
-                    </Button>
+                    </Button> */}
                     <Button type="submit" loading={loading} loadingText="Saving">
                         Save
                     </Button>
