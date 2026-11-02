@@ -71,23 +71,23 @@ def update_institute(
     return db_institute
 
 
-@router.delete("/{id}")
-def delete_institute(
-    id: int,
-    session: SessionDep,
-    _: ProfessorDep,
-    x_institute_id: Annotated[str | None, Header()] = None,
-):
-    from sqlmodel import text
+# @router.delete("/{id}")
+# def delete_institute(
+#     id: int,
+#     session: SessionDep,
+#     _: ProfessorDep,
+#     x_institute_id: Annotated[str | None, Header()] = None,
+# ):
+#     from sqlmodel import text
 
-    db_institute = session.get(Institute, id)
-    if not db_institute:
-        raise HTTPException(status_code=404, detail="Institute not found")
-    _check_ownership(x_institute_id, id)
-    try:
-        session.execute(text("DELETE FROM workshop WHERE institute_id = :id"), {"id": id})
-    except Exception:
-        pass
-    session.delete(db_institute)
-    session.commit()
-    return {"ok": True}
+#     db_institute = session.get(Institute, id)
+#     if not db_institute:
+#         raise HTTPException(status_code=404, detail="Institute not found")
+#     _check_ownership(x_institute_id, id)
+#     try:
+#         session.execute(text("DELETE FROM workshop WHERE institute_id = :id"), {"id": id})
+#     except Exception:
+#         pass
+#     session.delete(db_institute)
+#     session.commit()
+#     return {"ok": True}
