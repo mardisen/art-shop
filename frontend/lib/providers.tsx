@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, ReactNode, useCallback, useEffect, useState } from "react";
-import { apiFetch, getCookieToken, validateToken } from "./auth";
+import { apiFetch, validateToken } from "./auth";
 import { User } from "./models";
 
 export const TokenContext = createContext({
     token: "",
     setToken: (token: string) => {}
-}as {token:string | undefined | null});
+} as { token: string | undefined | null; setToken: (token: string | null) => void });
 
 export const UserContext = createContext<{ user: User; refreshUser: () => Promise<void> }>({
     user: {} as User,
@@ -39,7 +39,7 @@ export default function Providers({ children }: Props) {
     }, [token]);
 
     useEffect(() => {
-        validateToken().then(value => setToken(value))
+        validateToken().then((value) => setToken(value));
     }, []);
 
     useEffect(() => {
