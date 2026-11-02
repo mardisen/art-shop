@@ -7,6 +7,7 @@ import { FormField } from "@/components/FormField";
 import { Button } from "@/components/Button";
 import { UserContext } from "@/lib/providers";
 import { Role } from "@/lib/models";
+import Link from "next/link";
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -132,6 +133,11 @@ export default function EditProfilePage() {
                                 </option>
                             ))}
                         </select>
+                        {instituteId && (
+                            <Link href={`/institutes/${instituteId}`} className="mt-1 inline-block text-xs underline">
+                                View institute
+                            </Link>
+                        )}
                     </label>
                 )}
                 <div className="flex gap-2">
