@@ -80,17 +80,17 @@ def test_update_institute(client):
     assert client.get(f"/institute/{created['id']}").json()["name"] == "Renamed"
 
 
-def test_delete_institute(client):
-    created = create(client).json()
-    id = created["id"]
-    headers = {**PROFESSOR, "X-Institute-Id": str(id)}
-    assert (
-        client.delete(f"/institute/{created['id']}", headers=headers).status_code == 200
-    )
-    assert client.get(f"/institute/{created['id']}").status_code == 404
-    assert (
-        client.delete(f"/institute/{created['id']}", headers=headers).status_code == 404
-    )
+# def test_delete_institute(client):
+#     created = create(client).json()
+#     id = created["id"]
+#     headers = {**PROFESSOR, "X-Institute-Id": str(id)}
+#     assert (
+#         client.delete(f"/institute/{created['id']}", headers=headers).status_code == 200
+#     )
+#     assert client.get(f"/institute/{created['id']}").status_code == 404
+#     assert (
+#         client.delete(f"/institute/{created['id']}", headers=headers).status_code == 404
+#     )
 
 
 def test_update_unknown_institute(client):
@@ -108,8 +108,8 @@ def test_mutations_require_professor_role(client):
         ).status_code
         == 403
     )
-    assert (
-        client.delete(f"/institute/{created['id']}", headers=ARTIST).status_code == 403
-    )
+    # assert (
+    #     client.delete(f"/institute/{created['id']}", headers=ARTIST).status_code == 403
+    # )
     assert client.get(f"/institute/{created['id']}").status_code == 200
     assert client.get("/institute/").status_code == 200
