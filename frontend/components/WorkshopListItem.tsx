@@ -28,7 +28,9 @@ export function WorkshopListItem({ workshop, showDelete = false, showEdit = fals
     return (
         <li className="py-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">{workshop.name}</h2>
+                <Link href={`/workshops/${workshop.id}`} className="text-lg font-medium hover:underline">
+                    {workshop.name}
+                </Link>
                 <div className="flex items-center gap-2">
                     {showBookmark && <BookmarkButton workshopId={workshop.id} />}
                     {workshop.created_by && user?.id && workshop.created_by === user.id && (

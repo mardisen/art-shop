@@ -21,7 +21,7 @@ test_data = {
             name="Workshop 1",
             description="description",
             link="example.com",
-            institue_id=1,
+            institute_id=1,
             created_by=2,
             date=current_date + relativedelta(month=1)
         ),
@@ -32,7 +32,7 @@ test_data = {
             name="Workshop 2",
             description="description",
             link="example.com",
-            institue_id=1,
+            institute_id=1,
             created_by=2,
             date=current_date + relativedelta(month=2)
         ),
@@ -43,7 +43,7 @@ test_data = {
             name="Workshop 3",
             description="description",
             link="example.com",
-            institue_id=0,
+            institute_id=0,
             created_by=2,
             date=current_date + relativedelta(month=3)
         ),

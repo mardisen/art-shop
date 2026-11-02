@@ -19,6 +19,14 @@ export function clearToken(): void {
     document.cookie = `${TOKEN_KEY}=; path=/; SameSite=lax; Max-Age=0`;
 }
 
+export async function validateToken(): Promise<string | null> {
+    const headers = new Headers();
+    const token = await getCookieToken();
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if ((await fetch(`${API_URL}/auth/me`, { headers })).ok) return token;
+    else return null;
+}
+
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers);
     const token = await getCookieToken();
