@@ -76,7 +76,9 @@ export default function WorkshopDetailPage() {
                 {institute && (
                     <div className="mt-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
                         <h2 className="text-lg font-medium">Institute</h2>
-                        <p className="text-sm font-medium">{institute.name}</p>
+                        <Link href={`/institutes/${institute.id}`} className="text-sm font-medium underline">
+                            {institute.name}
+                        </Link>
                         {institute.address && <p className="text-sm text-zinc-600 dark:text-zinc-400">{institute.address}</p>}
                         {institute.description && <p className="mt-1 text-sm">{institute.description}</p>}
                         {institute.link && (
