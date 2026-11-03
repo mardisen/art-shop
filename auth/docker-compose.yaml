@@ -18,33 +18,33 @@ services:
       timeout: 5s
       retries: 5
   
-  # fastapi:
-  #   image: "artshop/$SERVICE_NAME"
-  #   container_name: "$SERVICE_NAME-fastapi"
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   build:
-  #     dockerfile: ./Dockerfile
-  #   ports:
-  #     - 8000:80
-  #   networks:
-  #     - backend
-  #     - public
+  fastapi:
+    image: "artshop/$SERVICE_NAME"
+    container_name: "$SERVICE_NAME-fastapi"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    build:
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:80
+    networks:
+      - backend
+      - public
   
-  # seed:
-  #   image: "artshop/$SERVICE_NAME"
-  #   depends_on:
-  #     fastapi:
-  #       condition: service_healthy
-  #   build:
-  #     dockerfile: ./Dockerfile
-  #   networks:
-  #     - backend
-  #   restart: "no"
-  #   entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
+  seed:
+    image: "artshop/$SERVICE_NAME"
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    build:
+      dockerfile: ./Dockerfile
+    networks:
+      - backend
+    restart: "no"
+    entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
   
   redis: 
     image: redislabs/redismod
