@@ -48,6 +48,7 @@ services:
   
   redis: 
     image: redislabs/redismod
+    container_name: "$SERVICE_NAME-redis"
     ports:
       - 6379:6379
     networks:
@@ -62,7 +63,7 @@ networks:
   backend:
     name: artshop-$SERVICE_NAME-private
     driver: bridge
-    internal: false
+    internal: true
   public:
     name: artshop-$SERVICE_NAME-public
     driver: bridge

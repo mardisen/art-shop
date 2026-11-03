@@ -12,9 +12,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+FastAPIRedis(app).lifespan().caching()
 app.include_router(auth_router)
 
-FastAPIRedis(app).lifespan().caching()
 
 origins = [
     "http://localhost",
