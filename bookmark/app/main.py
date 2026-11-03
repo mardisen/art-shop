@@ -1,3 +1,4 @@
+from redis_fastapi import FastAPIRedis
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.database import create_db_and_tables
@@ -11,7 +12,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+FastAPIRedis(app).lifespan().caching()
 app.include_router(bookmark_router)
+
 
 origins = [
     "http://localhost",
