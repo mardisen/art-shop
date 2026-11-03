@@ -6,9 +6,21 @@ x-db: &db
     POSTGRES_USER: example
     POSTGRES_PASSWORD: example
     POSTGRES_DB: fastapi
+  ports:
+    - 5432:5432
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U example -d fastapi"]
     interval: 20s
+    timeout: 5s
+    retries: 5
+
+x-redis: &redis
+  image: redislabs/redismod
+  ports:
+    - 6379:6379
+  healthcheck:
+    test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    interval: 10s
     timeout: 5s
     retries: 5
 
@@ -22,18 +34,34 @@ x-api: &api
     start_period: 20s
 
 x-seed: &seed
-    restart: "no"
-    entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
+  restart: "no"
+  entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
 
 
 services:
   auth-db:
     <<: *db
     container_name: auth-postgres
-    ports:
-      - 5432:5432
     networks:
-    - auth
+      - auth
+
+  auth-redis:
+    <<: *redis
+    container_name: auth-redis
+    networks:
+      - auth
+  
+  auth-seed:
+    <<: *seed
+    image: artshop/auth
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    build:
+      context: auth
+      dockerfile: ./Dockerfile
+    networks:
+      - auth
 
   auth:
     <<: *api
@@ -45,33 +73,39 @@ services:
     depends_on:
       auth-db:
         condition: service_healthy
+      auth-redis:
+        condition: service_healthy
+      auth-seed:
+        condition: service_completed_successfully
     ports:
       - 8001:80
     networks:
-    - auth
-    - public
-  
-  auth_seed:
-    <<: *seed
-    image: artshop/auth
-    depends_on:
-      auth-db:
-        condition: service_healthy
-      auth:
-        condition: service_healthy
-    build:
-      context: auth
-      dockerfile: ./Dockerfile
-    networks:
       - auth
-
+      - public
+  
   bookmark-db:
     <<: *db
     container_name: bookmark-postgres
-    ports:
-      - 5432:5432
     networks:
-    - bookmark
+      - bookmark
+  
+  bookmark-redis:
+    <<: *redis
+    container_name: bookmark-redis
+    networks:
+      - bookmark
+
+  bookmark-seed:
+    <<: *seed
+    image: artshop/bookmark
+    depends_on:
+      bookmark-db:
+        condition: service_healthy
+    build:
+      context: bookmark
+      dockerfile: ./Dockerfile
+    networks:
+      - bookmark
 
   bookmark:
     <<: *api
@@ -83,25 +117,15 @@ services:
     depends_on:
       bookmark-db:
         condition: service_healthy
+      bookmark-redis:
+        condition: service_healthy
+      bookmark-seed:
+        condition: service_completed_successfully
     ports:
       - 8002:80
     networks:
-    - bookmark
-    - public
-
-  bookmark_seed:
-    <<: *seed
-    image: artshop/bookmark
-    depends_on:
-      bookmark-db:
-        condition: service_healthy
-      bookmark:
-        condition: service_healthy
-    build:
-      context: bookmark
-      dockerfile: ./Dockerfile
-    networks:
       - bookmark
+      - public
 
   institute-db:
     <<: *db
@@ -109,7 +133,25 @@ services:
     ports:
       - 5432:5432
     networks:
-    - institute
+      - institute
+  
+  institute-redis:
+    <<: *redis
+    container_name: institute-redis
+    networks:
+      - institute
+
+  institute-seed:
+    <<: *seed
+    image: artshop/institute
+    depends_on:
+      institute-db:
+        condition: service_healthy
+    build:
+      context: institute
+      dockerfile: ./Dockerfile
+    networks:
+      - institute
 
   institute:
     <<: *api
@@ -121,33 +163,39 @@ services:
     depends_on:
       institute-db:
         condition: service_healthy
+      institute-redis:
+        condition: service_healthy
+      institute-seed:
+        condition: service_completed_successfully
     ports:
       - 8003:80
     networks:
-    - institute
-    - public
-
-  institute_seed:
-    <<: *seed
-    image: artshop/institute
-    depends_on:
-      institute-db:
-        condition: service_healthy
-      institute:
-        condition: service_healthy
-    build:
-      context: institute
-      dockerfile: ./Dockerfile
-    networks:
       - institute
+      - public
 
   workshop-db:
     <<: *db
     container_name: workshop-postgres
-    ports:
-      - 5432:5432
     networks:
-    - workshop
+      - workshop
+  
+  workshop-redis:
+    <<: *redis
+    container_name: workshop-redis
+    networks:
+      - workshop
+
+  workshop-seed:
+    <<: *seed
+    image: artshop/workshop
+    depends_on:
+      workshop-db:
+        condition: service_healthy
+    build:
+      context: workshop
+      dockerfile: ./Dockerfile
+    networks:
+      - workshop
 
   workshop:
     <<: *api
@@ -159,25 +207,15 @@ services:
     depends_on:
       workshop-db:
         condition: service_healthy
+      workshop-redis:
+        condition: service_healthy
+      workshop-seed:
+        condition: service_completed_successfully
     ports:
       - 8004:80
     networks:
-    - workshop
-    - public
-  
-  workshop_seed:
-    <<: *seed
-    image: artshop/workshop
-    depends_on:
-      workshop-db:
-        condition: service_healthy
-      workshop:
-        condition: service_healthy
-    build:
-      context: workshop
-      dockerfile: ./Dockerfile
-    networks:
       - workshop
+      - public
   
   gateway:
     <<: *api
@@ -198,7 +236,7 @@ services:
     ports:
       - 8000:80
     networks:
-    - public
+      - public
 
 networks:
   auth:
