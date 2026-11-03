@@ -1,4 +1,3 @@
-from redis_fastapi import cache_put
 from redis_fastapi import cache_evict
 from redis_fastapi import cache
 from redis_fastapi import default_key_builder
@@ -34,11 +33,7 @@ def _check_ownership(x_institute_id: str | None, id: int):
 @router.post(
     "/",
     status_code=201,
-    dependencies=[
-        Depends(
-            cache_evict(eviction_group="institute", key_builder=default_key_builder)
-        )
-    ],
+    dependencies=[Depends(cache_evict(eviction_group="institute"))],
 )
 def create_institute(institute: InstituteBase, session: SessionDep, _: ProfessorDep):
     db_institute = Institute.model_validate(institute)
@@ -77,13 +72,7 @@ def get_institutes(session: SessionDep):
 
 @router.put(
     "/{id}",
-    dependencies=[
-        Depends(
-            cache_put(
-                eviction_group="institute", key_builder=default_key_builder, ttl=300
-            )
-        )
-    ],
+    dependencies=[Depends(cache_evict(eviction_group="institute"))],
 )
 def update_institute(
     id: int,
