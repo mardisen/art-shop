@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.database import create_db_and_tables
 from app.routers.auth import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
+from redis_fastapi import FastAPIRedis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -12,6 +13,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
+
+FastAPIRedis(app).lifespan().caching()
 
 origins = [
     "http://localhost",

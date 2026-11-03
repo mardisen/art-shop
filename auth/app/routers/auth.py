@@ -1,3 +1,6 @@
+from fastapi.encoders import jsonable_encoder
+from dns import ttl
+from redis_fastapi import CacheBackendDep
 from app.models.user import UserTokenResponse
 from app.models.user import UserResponse
 from app.models.user import UserUpdate
@@ -47,8 +50,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep, cache: CacheBackendDep
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,9 +66,14 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
+    cached_user = await cache.get(f"email:{email}", eviction_group="email")
+    if cached_user is not None:
+        return cached_user
     user = session.exec(select(User).where(User.email == email)).first()
     if user is None:
         raise credentials_exception
+    
+    await cache.set(f"email:{email}", jsonable_encoder(user), ttl=300, eviction_group="email")
     return user
 
 
