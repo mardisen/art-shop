@@ -1,3 +1,6 @@
+from pydantic_extra_types.coordinate import Longitude
+from pydantic_extra_types.coordinate import Latitude
+from app.models.workshop import Type
 from redis_fastapi import cache_put
 from redis_fastapi import cache
 from redis_fastapi import cache_evict
@@ -46,6 +49,56 @@ def create_workshop(
 
 
 @router.get(
+    "/search",
+    dependencies=[
+        Depends(
+            cache(eviction_group="workshops", key_builder=default_key_builder, ttl=300)
+        )
+    ],
+)
+def search_workshops(
+    session: SessionDep,
+    type: Type | None = None,
+    search: str | None = None,
+    latitude: Latitude | None = None,
+    longitude: Longitude | None = None,
+    distance: int | None = None,
+):
+    statement = select(Workshop)
+
+    if type is not None:
+        statement = statement.where(Workshop.type == type)
+
+    if search is not None:
+        statement = statement.where(
+            or_(
+                Workshop.name.contains(search),  # pyrefly: ignore[missing-attribute]
+                Workshop.description.contains(
+                    search
+                ),  # pyrefly: ignore[missing-attribute]
+            )
+        )
+
+    workshops = session.exec(statement).all()
+
+    if latitude is not None and longitude is not None and distance is not None:
+        workshops = [
+            workshop
+            for workshop in workshops
+            if distance_between_points(
+                workshop.latitude,
+                workshop.longitude,
+                latitude,
+                longitude,
+            )
+            <= distance
+        ]
+
+    return workshops
+
+
+
+@router.get(
     "/{id}",
     dependencies=[
         Depends(
@@ -70,47 +123,6 @@ def get_workshop(id: int, session: SessionDep):
 )
 def get_workshops(session: SessionDep):
     workshops = session.exec(select(Workshop)).all()
-    return workshops
-
-
-@router.post("/search")
-def search_workshops(search_args: WorkshopSearch, session: SessionDep):
-    statement = select(Workshop)
-
-    if search_args.type is not None:
-        statement = statement.where(Workshop.type == search_args.type)
-
-    if search_args.search is not None:
-        statement = statement.where(
-            or_(
-                Workshop.name.contains(
-                    search_args.search
-                ),  # pyrefly: ignore[missing-attribute]
-                Workshop.description.contains(
-                    search_args.search
-                ),  # pyrefly: ignore[missing-attribute]
-            )
-        )
-
-    workshops = session.exec(statement).all()
-
-    if (
-        search_args.latitude is not None
-        and search_args.longitude is not None
-        and search_args.distance is not None
-    ):
-        workshops = [
-            workshop
-            for workshop in workshops
-            if distance_between_points(
-                workshop.latitude,
-                workshop.longitude,
-                search_args.latitude,
-                search_args.longitude,
-            )
-            <= search_args.distance
-        ]
-
     return workshops
 
 

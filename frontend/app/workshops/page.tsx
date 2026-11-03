@@ -52,10 +52,10 @@ function WorkshopsContent() {
                 body.latitude = lat;
                 body.longitude = lng;
             }
-            const res = await apiFetch(`/workshop/search`, {
-                method: "POST",
+            const query = new URLSearchParams(body).toString();
+            const res = await apiFetch(`/workshop/search?` + query, {
+                method: "GET",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
             });
             if (!res.ok) {
                 setWorkshops([]);
