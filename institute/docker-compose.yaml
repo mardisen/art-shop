@@ -24,6 +24,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     build:
       dockerfile: ./Dockerfile
     ports:
@@ -31,6 +33,31 @@ services:
     networks:
       - backend
       - public
+
+  seed:
+    image: "artshop/$SERVICE_NAME"
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    build:
+      dockerfile: ./Dockerfile
+    networks:
+      - backend
+    restart: "no"
+    entrypoint: [ "/app/.venv/bin/python", "app/cli.py" ]
+
+  redis: 
+    image: redislabs/redismod
+    container_name: "$SERVICE_NAME-redis"
+    ports:
+      - 6379:6379
+    networks:
+      - backend
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 
 networks:
