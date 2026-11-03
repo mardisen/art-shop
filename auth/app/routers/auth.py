@@ -1,5 +1,3 @@
-from fastapi.encoders import jsonable_encoder
-from dns import ttl
 from redis_fastapi import CacheBackendDep
 from app.models.user import UserTokenResponse
 from app.models.user import UserResponse
@@ -66,14 +64,16 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    cached_user = await cache.get(f"email:{email}", eviction_group="email")
-    if cached_user is not None:
-        return cached_user
+    cached_id = await cache.get(f"email:{email}", eviction_group="email")
+    if cached_id is not None:
+        user = session.get(User, cached_id)
+        if user is not None and user.email == email:
+            return user
     user = session.exec(select(User).where(User.email == email)).first()
     if user is None:
         raise credentials_exception
-    
-    await cache.set(f"email:{email}", jsonable_encoder(user), ttl=300, eviction_group="email")
+
+    await cache.set(f"email:{email}", user.id, ttl=300, eviction_group="email")
     return user
 
 
