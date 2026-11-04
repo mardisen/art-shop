@@ -237,6 +237,20 @@ services:
       - 8000:80
     networks:
       - public
+  
+  frontend:
+    container_name: frontend
+    image: artshop/frontend
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    depends_on:
+      gateway:
+        condition: service_healthy
+    ports:
+      - 3000:3000
+    networks:
+      - public
 
 networks:
   auth:
