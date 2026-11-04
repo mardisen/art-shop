@@ -22,9 +22,9 @@ from os import getenv
 
 load_dotenv()
 
-SECRET_KEY = getenv("SECRET_KEY") or ""
-ALGORITHM = getenv("ALGORITHM") or ""
-ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or 0)
+SECRET_KEY = getenv("SECRET_KEY") or "super-secret-key"
+ALGORITHM = getenv("ALGORITHM") or "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or 300)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
