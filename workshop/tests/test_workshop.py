@@ -6,6 +6,9 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from app.database import get_db_session
 from app.routers.workshop import router
+from redis_fastapi import get_async_redis
+
+import fakeredis.aioredis
 
 
 @pytest.fixture
@@ -21,9 +24,12 @@ def client():
         with Session(engine) as session:
             yield session
 
+    redis = fakeredis.aioredis.FakeRedis()
+
     app = FastAPI()
     app.include_router(router)
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[get_async_redis] = lambda: redis
     with TestClient(app) as test_client:
         yield test_client
     SQLModel.metadata.drop_all(engine)
@@ -121,46 +127,46 @@ def seed(client):
 
 def test_search_empty_body_returns_all(client):
     milan, rome, venice = seed(client)
-    resp = client.post("/workshop/search", json={})
+    resp = client.get("/workshop/search")
     assert resp.status_code == 200
     assert {w["id"] for w in resp.json()} == {milan["id"], rome["id"], venice["id"]}
 
 
 def test_search_by_type(client):
     milan, rome, venice = seed(client)
-    resp = client.post("/workshop/search", json={"type": "Sculpture"})
+    resp = client.get("/workshop/search", params={"type": "Sculpture"})
     assert [w["id"] for w in resp.json()] == [rome["id"]]
 
 
 def test_search_by_text_matches_name_or_description(client):
     milan, rome, venice = seed(client)
-    by_name = client.post("/workshop/search", json={"search": "pottery"})
+    by_name = client.get("/workshop/search", params={"search": "pottery"})
     assert [w["id"] for w in by_name.json()] == [milan["id"]]
-    by_description = client.post("/workshop/search", json={"search": "canals"})
+    by_description = client.get("/workshop/search", params={"search": "canals"})
     assert [w["id"] for w in by_description.json()] == [venice["id"]]
-    no_match = client.post("/workshop/search", json={"search": "zzz"})
+    no_match = client.get("/workshop/search", params={"search": "zzz"})
     assert no_match.json() == []
 
 
 def test_search_by_distance(client):
     milan, rome, venice = seed(client)
-    near = client.post(
+    near = client.get(
         "/workshop/search",
-        json={"latitude": 45.4642, "longitude": 9.19, "distance": 300},
+        params={"latitude": 45.4642, "longitude": 9.19, "distance": 300},
     )
     assert {w["id"] for w in near.json()} == {milan["id"], venice["id"]}
-    city_only = client.post(
+    city_only = client.get(
         "/workshop/search",
-        json={"latitude": 45.4642, "longitude": 9.19, "distance": 1},
+        params={"latitude": 45.4642, "longitude": 9.19, "distance": 1},
     )
     assert [w["id"] for w in city_only.json()] == [milan["id"]]
 
 
 def test_search_combines_filters(client):
     milan, rome, venice = seed(client)
-    resp = client.post(
+    resp = client.get(
         "/workshop/search",
-        json={
+        params={
             "latitude": 45.4642,
             "longitude": 9.19,
             "distance": 300,
@@ -172,8 +178,8 @@ def test_search_combines_filters(client):
 
 def test_search_ignores_partial_distance_args(client):
     milan, rome, venice = seed(client)
-    resp = client.post(
+    resp = client.get(
         "/workshop/search",
-        json={"latitude": 45.4642, "longitude": 9.19},
+        params={"latitude": 45.4642, "longitude": 9.19},
     )
     assert len(resp.json()) == 3

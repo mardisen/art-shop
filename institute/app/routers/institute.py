@@ -1,3 +1,6 @@
+from redis_fastapi import cache_evict
+from redis_fastapi import cache
+from redis_fastapi import default_key_builder
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -27,10 +30,12 @@ def _check_ownership(x_institute_id: str | None, id: int):
         raise HTTPException(status_code=403, detail="Not allowed")
 
 
-@router.post("/", status_code=201)
-def create_institute(
-    institute: InstituteBase, session: SessionDep, _: ProfessorDep
-):
+@router.post(
+    "/",
+    status_code=201,
+    dependencies=[Depends(cache_evict(eviction_group="institute"))],
+)
+def create_institute(institute: InstituteBase, session: SessionDep, _: ProfessorDep):
     db_institute = Institute.model_validate(institute)
     session.add(db_institute)
     session.commit()
@@ -38,7 +43,14 @@ def create_institute(
     return db_institute
 
 
-@router.get("/{id}")
+@router.get(
+    "/{id}",
+    dependencies=[
+        Depends(
+            cache(eviction_group="institute", key_builder=default_key_builder, ttl=300)
+        )
+    ],
+)
 def get_institute(id: int, session: SessionDep):
     institute = session.get(Institute, id)
     if not institute:
@@ -46,12 +58,22 @@ def get_institute(id: int, session: SessionDep):
     return institute
 
 
-@router.get("/")
+@router.get(
+    "/",
+    dependencies=[
+        Depends(
+            cache(eviction_group="institute", key_builder=default_key_builder, ttl=300)
+        )
+    ],
+)
 def get_institutes(session: SessionDep):
     return session.exec(select(Institute)).all()
 
 
-@router.put("/{id}")
+@router.put(
+    "/{id}",
+    dependencies=[Depends(cache_evict(eviction_group="institute"))],
+)
 def update_institute(
     id: int,
     institute: InstituteBase,

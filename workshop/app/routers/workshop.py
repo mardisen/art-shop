@@ -1,3 +1,10 @@
+from pydantic_extra_types.coordinate import Longitude
+from pydantic_extra_types.coordinate import Latitude
+from app.models.workshop import Type
+from redis_fastapi import cache_put
+from redis_fastapi import cache
+from redis_fastapi import cache_evict
+from redis_fastapi import default_key_builder
 from app.utils import distance_between_points
 from typing import Annotated
 
@@ -22,7 +29,10 @@ def get_caller_id(x_user_id: Annotated[int | None, Header()] = None) -> int:
 CallerDep = Annotated[int, Depends(get_caller_id)]
 
 
-@router.post("/")
+@router.post(
+    "/",
+    dependencies=[Depends(cache_evict(eviction_group="workshops"))],
+)
 def create_workshop(
     workshop: WorkshopBase,
     session: SessionDep,
@@ -38,7 +48,64 @@ def create_workshop(
     return db_workshop
 
 
-@router.get("/{id}")
+@router.get(
+    "/search",
+    dependencies=[
+        Depends(
+            cache(eviction_group="workshops", key_builder=default_key_builder, ttl=300)
+        )
+    ],
+)
+def search_workshops(
+    session: SessionDep,
+    type: Type | None = None,
+    search: str | None = None,
+    latitude: Latitude | None = None,
+    longitude: Longitude | None = None,
+    distance: int | None = None,
+):
+    statement = select(Workshop)
+
+    if type is not None:
+        statement = statement.where(Workshop.type == type)
+
+    if search is not None:
+        statement = statement.where(
+            or_(
+                Workshop.name.contains(search),  # pyrefly: ignore[missing-attribute]
+                Workshop.description.contains(
+                    search
+                ),  # pyrefly: ignore[missing-attribute]
+            )
+        )
+
+    workshops = session.exec(statement).all()
+
+    if latitude is not None and longitude is not None and distance is not None:
+        workshops = [
+            workshop
+            for workshop in workshops
+            if distance_between_points(
+                workshop.latitude,
+                workshop.longitude,
+                latitude,
+                longitude,
+            )
+            <= distance
+        ]
+
+    return workshops
+
+
+
+@router.get(
+    "/{id}",
+    dependencies=[
+        Depends(
+            cache(eviction_group="workshops", key_builder=default_key_builder, ttl=300)
+        )
+    ],
+)
 def get_workshop(id: int, session: SessionDep):
     workshop = session.get(Workshop, id)
     if not workshop:
@@ -46,50 +113,23 @@ def get_workshop(id: int, session: SessionDep):
     return workshop
 
 
-@router.get("/")
+@router.get(
+    "/",
+    dependencies=[
+        Depends(
+            cache(eviction_group="workshops", key_builder=default_key_builder, ttl=300)
+        )
+    ],
+)
 def get_workshops(session: SessionDep):
     workshops = session.exec(select(Workshop)).all()
     return workshops
 
 
-@router.post("/search")
-def search_workshops(search_args: WorkshopSearch, session: SessionDep):
-    statement = select(Workshop)
-
-    if search_args.type is not None:
-        statement = statement.where(Workshop.type == search_args.type)
-
-    if search_args.search is not None:
-        statement = statement.where(
-            or_(
-                Workshop.name.contains(search_args.search),  # pyrefly: ignore[missing-attribute]
-                Workshop.description.contains(search_args.search),  # pyrefly: ignore[missing-attribute]
-            )
-        )
-
-    workshops = session.exec(statement).all()
-
-    if (
-        search_args.latitude is not None
-        and search_args.longitude is not None
-        and search_args.distance is not None
-    ):
-        workshops = [
-            workshop
-            for workshop in workshops
-            if distance_between_points(
-                workshop.latitude,
-                workshop.longitude,
-                search_args.latitude,
-                search_args.longitude,
-            )
-            <= search_args.distance
-        ]
-
-    return workshops
-
-
-@router.put("/{id}")
+@router.put(
+    "/{id}",
+    dependencies=[Depends(cache_evict(eviction_group="workshops"))],
+)
 def update_workshop(
     id: int, workshop: WorkshopBase, session: SessionDep, caller_id: CallerDep
 ):
@@ -106,7 +146,10 @@ def update_workshop(
     return db_workshop
 
 
-@router.delete("/{id}")
+@router.delete(
+    "/{id}",
+    dependencies=[Depends(cache_evict(eviction_group="workshops"))],
+)
 def delete_workshop(id: int, session: SessionDep, caller_id: CallerDep):
     workshop = session.get(Workshop, id)
     if not workshop:

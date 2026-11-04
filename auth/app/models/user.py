@@ -9,7 +9,7 @@ from sqlmodel import SQLModel
 import enum
 
 
-class Role(enum.Enum):
+class Role(str, enum.Enum):
     Artist = "Artist"
     Professor = "Professor"
 

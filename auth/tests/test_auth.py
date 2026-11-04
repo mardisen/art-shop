@@ -8,6 +8,9 @@ from sqlmodel import Session, SQLModel, create_engine
 from app.database import get_db_session
 from app.routers.auth import create_access_token, router
 from app.models.user import User
+from redis_fastapi import CacheBackend, get_async_redis, get_cache_backend
+
+import fakeredis.aioredis
 
 
 @pytest.fixture
@@ -23,9 +26,13 @@ def client():
         with Session(engine) as session:
             yield session
 
+    redis = fakeredis.aioredis.FakeRedis()
+
     app = FastAPI()
     app.include_router(router)
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[get_async_redis] = lambda: redis
+    app.dependency_overrides[get_cache_backend] = lambda: CacheBackend(redis)
     with TestClient(app) as test_client:
         yield test_client
     SQLModel.metadata.drop_all(engine)
