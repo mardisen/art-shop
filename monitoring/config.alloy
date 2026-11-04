@@ -1,0 +1,139 @@
+// ###############################
+// #### Metrics Configuration ####
+// ###############################
+
+// Host Cadvisor on the Docker socket to expose container metrics.
+prometheus.exporter.cadvisor "example" {
+  docker_only = true
+}
+
+discovery.relabel "example" {
+    targets = prometheus.exporter.cadvisor.example.targets
+
+    rule {
+        target_label = "job"
+        replacement  = "integrations/docker"
+    }
+
+    rule {
+        target_label = "instance"
+        replacement  = constants.hostname + ":12345"
+    }
+}
+
+// Configure a prometheus.scrape component to collect cadvisor metrics.
+prometheus.scrape "scraper" {
+  targets    = discovery.relabel.example.output
+  forward_to = [ prometheus.relabel.cadvisor.receiver ]
+
+
+  scrape_interval = "10s"
+}
+
+// Expose the container name and compose service under the label names expected
+// by the community Docker dashboards.
+prometheus.relabel "cadvisor" {
+  forward_to = [ prometheus.remote_write.demo.receiver ]
+
+  rule {
+    source_labels = ["name"]
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+// Host (node) metrics, used by the system/container dashboards.
+prometheus.exporter.unix "host" {
+  rootfs_path = "/rootfs"
+  procfs_path = "/rootproc"
+  sysfs_path  = "/sys"
+}
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/unix"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname + ":12345"
+  }
+}
+
+prometheus.scrape "host" {
+  targets         = discovery.relabel.host.output
+  forward_to      = [ prometheus.remote_write.demo.receiver ]
+  scrape_interval = "10s"
+}
+
+// Configure a prometheus.remote_write component to send metrics to a Prometheus server.
+prometheus.remote_write "demo" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+// ###############################
+// #### Logging Configuration ####
+// ###############################
+
+// Discover Docker containers and extract metadata.
+discovery.docker "linux" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Define a relabeling rule to create a service name from the container name.
+discovery.relabel "logs_integrations_docker" {
+      targets = []
+  
+      rule {
+          source_labels = ["__meta_docker_container_name"]
+          regex = "/(.*)"
+          target_label = "container_name"
+      }
+
+     rule {
+        target_label = "instance"
+        replacement  = constants.hostname + ":12345"
+    }
+
+     rule {
+        target_label = "application"
+        replacement  = "docker"
+    }
+
+  }
+
+
+// Configure a loki.source.docker component to collect logs from Docker containers.
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.linux.targets
+  relabel_rules = discovery.relabel.logs_integrations_docker.rules
+  forward_to = [loki.process.docker_logs.receiver]
+}
+
+// Process and filter Docker logs before sending to Loki.
+// Example: Drop logs from infrastructure containers.
+// Modify the regex pattern to match container names you want to exclude.
+loki.process "docker_logs" {
+  forward_to = [loki.write.local.receiver]
+
+  stage.drop {
+    source     = "container_name"
+    expression = "(alloy|grafana|loki)"
+  }
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
