@@ -47,16 +47,36 @@ def get_service_url(requested_url: URL):
             raise ServiceNotFoundException()
 
 
+_HOP_BY_HOP = (
+    "host",
+    "content-length",
+    "connection",
+    "transfer-encoding",
+    "x-forwarded-for",
+    "x-forwarded-proto",
+    "x-forwarded-host",
+)
+
+
 async def get_security_headers(headers: Headers):
-    async with httpx2.AsyncClient() as client:
-        token_headers = {"authorization": headers.get("authorization") or ""}
+    return_headers = headers.mutablecopy()
+    for key in _HOP_BY_HOP:
+        if key in return_headers:
+            del return_headers[key]
+    authorization = headers.get("authorization")
+    if not authorization:
+        return return_headers
+
+    async with httpx2.AsyncClient(timeout=30.0) as client:
+        token_headers = {"authorization": authorization}
         response = await client.get(
             ServiceUrl.auth_url + "/auth/me", headers=token_headers
         )
 
-        json = response.json()
+        if response.status_code != 200:
+            return return_headers
 
-        return_headers = headers.mutablecopy()
+        json = response.json()
 
         print(json)
 
@@ -71,7 +91,8 @@ async def get_security_headers(headers: Headers):
 
 
 async def forward_request(request: Request):
-    url = get_service_url(request.url) + request.url.path
+    service_url = get_service_url(request.url)
+    url = service_url + request.url.path
     print(url)
 
     headers = await get_security_headers(request.headers)
@@ -82,7 +103,7 @@ async def forward_request(request: Request):
     except JSONDecodeError:
         json = None
     form = await request.form()
-    async with httpx2.AsyncClient() as client:
+    async with httpx2.AsyncClient(timeout=30.0) as client:
         return await client.request(
             request.method,
             url,

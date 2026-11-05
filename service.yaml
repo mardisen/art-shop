@@ -1,0 +1,65 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: artshop
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/container-dependencies: '{"auth":["cloud-sql-proxy","redis"],"bookmark":["cloud-sql-proxy","redis"],"institute":["cloud-sql-proxy","redis"],"workshop":["cloud-sql-proxy","redis"]}'
+    spec:
+      serviceAccountName: artshop-run@artshop-second.iam.gserviceaccount.com
+      containers:
+        - name: gateway
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/gateway:latest
+          ports:
+            - containerPort: 80
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]
+          env:
+            - name: DISABLE_SERVICE_AUTH
+              value: "true"
+            - name: AUTH_URL
+              value: "http://localhost:8001"
+            - name: BOOKMARK_URL
+              value: "http://localhost:8002"
+            - name: INSTITUTE_URL
+              value: "http://localhost:8003"
+            - name: WORKSHOP_URL
+              value: "http://localhost:8004"
+        - name: auth
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/auth:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8001", "--host", "0.0.0.0"]
+          env:
+            - name: DATABASE_URL
+              value: "127.0.0.1:5432"
+        - name: bookmark
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/bookmark:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8002", "--host", "0.0.0.0"]
+          env: [{ name: DATABASE_URL, value: "127.0.0.1:5432" }]
+        - name: institute
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/institute:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8003", "--host", "0.0.0.0"]
+          env: [{ name: DATABASE_URL, value: "127.0.0.1:5432" }]
+        - name: workshop
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/workshop:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8004", "--host", "0.0.0.0"]
+          env: [{ name: DATABASE_URL, value: "127.0.0.1:5432" }]
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.26.3
+          args: ["--port=5432", "--address=0.0.0.0", "artshop-second:europe-west8:artshop-db"]
+          startupProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 20
+        - name: redis
+          image: redis:7-alpine
+          startupProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 19

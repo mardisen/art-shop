@@ -48,6 +48,12 @@ def test_no_headers_when_no_auth(client, upstream):
     assert "x-user-id" not in h
 
 
+def test_upstream_host_header_not_forwarded(client, upstream):
+    client.get("/institute/")
+    forwarded = [c for c in upstream if c.url.path == "/institute/"]
+    assert forwarded[0].headers["host"] == "institute.test"
+
+
 def test_query_string_forwarded(client, upstream):
     r = client.get("/institute/?page=2")
     assert r.status_code == 200

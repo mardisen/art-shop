@@ -1,3 +1,4 @@
+from os import getenv
 from fastapi import Response
 from starlette.status import HTTP_404_NOT_FOUND
 from fastapi.responses import JSONResponse
@@ -14,7 +15,12 @@ origins = [
     "http://localhost",
     "http://localhost:8000",
     "http://localhost:3000",
+    "*"
 ]
+
+frontend_url = getenv("FRONTEND_URL")
+if frontend_url:
+    origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,

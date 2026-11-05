@@ -1,0 +1,24 @@
+substitutions:
+  _REGION: europe-west8
+  _REPO: artshop
+  _TAG: latest
+  _NEXT_PUBLIC_API_URL: http://localhost:8000
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - id: build-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${_TAG}
+      - ./frontend
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/frontend:${_TAG}
+
+timeout: 1800s

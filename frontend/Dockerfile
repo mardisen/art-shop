@@ -3,6 +3,7 @@
   # ============================================
 
   ARG NODE_VERSION=24.14.0-slim
+  ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 
   FROM node:${NODE_VERSION} AS dependencies
 
@@ -29,6 +30,8 @@
 
   FROM node:${NODE_VERSION} AS builder
 
+  ARG NEXT_PUBLIC_API_URL
+
   # Set working directory
   WORKDIR /app
 
@@ -39,6 +42,7 @@
   COPY . .
 
   ENV NODE_ENV=production
+  ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
   # Next.js collects completely anonymous telemetry data about general usage.
   # Learn more here: https://nextjs.org/telemetry
