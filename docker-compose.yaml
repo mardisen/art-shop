@@ -130,8 +130,6 @@ services:
   institute-db:
     <<: *db
     container_name: institute-postgres
-    ports:
-      - 5432:5432
     networks:
       - institute
   
@@ -235,6 +233,20 @@ services:
         condition: service_healthy
     ports:
       - 8000:80
+    networks:
+      - public
+  
+  frontend:
+    container_name: frontend
+    image: artshop/frontend
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    depends_on:
+      gateway:
+        condition: service_healthy
+    ports:
+      - 3000:3000
     networks:
       - public
 

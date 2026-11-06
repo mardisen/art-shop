@@ -1,0 +1,106 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: artshop
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/container-dependencies: '{"auth":["cloud-sql-proxy","redis"],"bookmark":["cloud-sql-proxy","redis"],"institute":["cloud-sql-proxy","redis"],"workshop":["cloud-sql-proxy","redis"]}'
+    spec:
+      serviceAccountName: artshop-run@artshop-second.iam.gserviceaccount.com
+      containers:
+        - name: gateway
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/gateway:latest
+          ports:
+            - containerPort: 80
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "80", "--host", "0.0.0.0"]
+          env:
+            - name: DISABLE_SERVICE_AUTH
+              value: "true"
+            - name: AUTH_URL
+              value: "http://localhost:8001"
+            - name: BOOKMARK_URL
+              value: "http://localhost:8002"
+            - name: INSTITUTE_URL
+              value: "http://localhost:8003"
+            - name: WORKSHOP_URL
+              value: "http://localhost:8004"
+            - name: FRONTEND_URL
+              value: "https://frontend-204087020671.europe-west8.run.app"
+          startupProbe:
+            tcpSocket:
+              port: 80
+            periodSeconds: 5
+            failureThreshold: 60
+        - name: auth
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/auth:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8001", "--host", "0.0.0.0"]
+          env: &db-env
+            - name: DATABASE_ENGINE
+              value: "postgresql"
+            - name: DATABASE_USER
+              value: "example"
+            - name: DATABASE_PASSWORD
+              value: "example"
+            - name: DATABASE_SPACE
+              value: "fastapi"
+            - name: DATABASE_URL
+              value: "127.0.0.1:5432"
+            - name: REDIS_URL
+              value: "redis://localhost:6379/0"
+          startupProbe:
+            tcpSocket:
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+        - name: bookmark
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/bookmark:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8002", "--host", "0.0.0.0"]
+          env: *db-env
+          startupProbe:
+            tcpSocket:
+              port: 8002
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+        - name: institute
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/institute:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8003", "--host", "0.0.0.0"]
+          env: *db-env
+          startupProbe:
+            tcpSocket:
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+        - name: workshop
+          image: europe-west8-docker.pkg.dev/artshop-second/artshop/workshop:latest
+          command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8004", "--host", "0.0.0.0"]
+          env: *db-env
+          startupProbe:
+            tcpSocket:
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.26.3
+          args: ["--address=0.0.0.0", "--port=5432", "artshop-second:europe-west8:artshop-db"]
+          startupProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 20
+        - name: redis
+          image: redis:7-alpine
+          startupProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 20

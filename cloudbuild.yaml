@@ -1,0 +1,72 @@
+substitutions:
+  _REGION: europe-west8
+  _REPO: artshop
+  _TAG: latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - id: ensure-artifact-registry
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud artifacts repositories describe "${_REPO}" \
+          --location="${_REGION}" --project="${PROJECT_ID}" >/dev/null 2>&1 || \
+        gcloud artifacts repositories create "${_REPO}" \
+          --repository-format=docker \
+          --location="${_REGION}" \
+          --description="Art Shop container images" \
+          --project="${PROJECT_ID}"
+
+  - id: build-auth
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/auth:${_TAG}
+      - ./auth
+
+  - id: build-bookmark
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/bookmark:${_TAG}
+      - ./bookmark
+
+  - id: build-institute
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/institute:${_TAG}
+      - ./institute
+
+  - id: build-workshop
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/workshop:${_TAG}
+      - ./workshop
+
+  - id: build-gateway
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/gateway:${_TAG}
+      - ./gateway
+
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/auth:${_TAG}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/bookmark:${_TAG}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/institute:${_TAG}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/workshop:${_TAG}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/gateway:${_TAG}
+
+timeout: 1800s

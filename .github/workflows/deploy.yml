@@ -1,0 +1,107 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-cloud-run
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: artshop-second
+  REGION: europe-west8
+  REPO: artshop
+  SERVICE: artshop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Compute URLs
+        run: |
+          PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
+          echo "API_URL=https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app" >> "$GITHUB_ENV"
+          echo "FRONTEND_URL=https://frontend-${PROJECT_NUMBER}.${REGION}.run.app" >> "$GITHUB_ENV"
+
+      - name: Ensure Artifact Registry
+        run: |
+          gcloud artifacts repositories describe "$REPO" \
+            --location="$REGION" --project="$PROJECT_ID" >/dev/null 2>&1 || \
+          gcloud artifacts repositories create "$REPO" \
+            --repository-format=docker \
+            --location="$REGION" \
+            --description="Art Shop container images" \
+            --project="$PROJECT_ID"
+
+      - name: Build and push API images
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          for svc in auth bookmark institute workshop gateway; do
+            image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${svc}:latest"
+            echo "Building $svc"
+            docker build -t "$image" "./${svc}"
+            docker push "$image"
+          done
+
+      - name: Render service manifest
+        run: |
+          # Keep the gateway CORS origin in sync with the computed frontend URL.
+          sed -E "s#value: \"https://frontend-[^\"]*\.run\.app\"#value: \"${FRONTEND_URL}\"#" \
+            service.yaml > rendered-service.yaml
+
+      - name: Deploy API service
+        run: |
+          gcloud run services replace rendered-service.yaml \
+            --region="$REGION" --project="$PROJECT_ID"
+
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --region="$REGION" --project="$PROJECT_ID" \
+            --member=allUsers --role=roles/run.invoker
+
+      - name: Build and deploy frontend
+        run: |
+          set -euo pipefail
+          image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/frontend:latest"
+          docker build --build-arg NEXT_PUBLIC_API_URL="${API_URL}" -t "$image" ./frontend
+          docker push "$image"
+
+          gcloud run deploy frontend \
+            --image="$image" \
+            --region="$REGION" --project="$PROJECT_ID" \
+            --allow-unauthenticated
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          for i in {1..24}; do
+            if [ "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/")" = "200" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/")" = "200"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$FRONTEND_URL/")" = "200"
+
+          curl -s -D - -o /dev/null "$API_URL/" -H "Origin: $FRONTEND_URL" \
+            | grep -qi "access-control-allow-origin: $FRONTEND_URL"
