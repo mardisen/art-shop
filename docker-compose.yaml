@@ -130,8 +130,6 @@ services:
   institute-db:
     <<: *db
     container_name: institute-postgres
-    ports:
-      - 5432:5432
     networks:
       - institute
   
