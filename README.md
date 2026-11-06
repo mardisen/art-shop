@@ -4,6 +4,50 @@ Platform for discovering and creating art workshops. It provides geolocation-bas
 search, user registration/login with JWT sessions, per-service HTTP caching, and a
 server-rendered frontend.
 
+## Functionalities
+
+- **Accounts and authentication** — registration and login, JWT access tokens,
+  `Artist` and `Professor` roles, profile editing, and professor affiliation with
+  an institute.
+- **Workshop discovery** — full-text search, filtering by type (Drawing, Painting,
+  Sculpture, Photography, Other), radius filtering from the user's browser
+  geolocation (falling back to Bari), pagination, and detailed workshop pages with
+  map coordinates and external links.
+- **Bookmarks** — authenticated users can save, list, and remove workshops.
+- **Workshop management** — professors create, edit, and delete their own
+  workshops with a map picker, date, type, description, and optional link.
+  Workshops are associated with the professor's institute when one is set.
+- **Institute management** — professors create and edit their institute; institute
+  details are publicly browsable and linked from workshop pages.
+- **Performance and caching** — each backend caches read endpoints in Redis and
+  invalidates cached entries on writes; the frontend uses Next.js server-side
+  rendering and a single API client.
+- **Observability** — optional Grafana, Loki, Prometheus, and Alloy stack for
+  container logs, metrics, and dashboards.
+
+## Use cases
+
+### Artist
+
+1. Register or log in with the `Artist` role.
+2. Browse or search workshops by text, type, and distance from the current location.
+3. Open workshop details, view the associated institute, and follow external links.
+4. Bookmark workshops and review them later from **Bookmarks**.
+5. Update personal details and password from the profile page.
+
+### Professor
+
+1. Register or log in with the `Professor` role.
+2. Create an institute and select it in the profile page; the institute id is then
+   embedded in the JWT.
+3. Create workshops under the institute with location, date, type, description, and
+   website link.
+4. Manage workshops from **Created Workshops** (edit or delete own workshops).
+5. Browse, search, bookmark, and update the profile like any other user.
+
+
+Seeded demo accounts: `artist@example.com / artist` and `prof@example.com / prof`.
+
 ## Architecture
 
 ```mermaid
@@ -83,6 +127,65 @@ instance on an isolated network.
 | Workshop  | 8004       | Workshop search and management       |
 | Grafana   | 5000       | Monitoring dashboards (optional)     |
 
+## Web services
+
+### Live deployment (Google Cloud Run)
+
+- Frontend: <https://frontend-204087020671.europe-west8.run.app>
+- API gateway: <https://artshop-204087020671.europe-west8.run.app>
+- Gateway health check: <https://artshop-204087020671.europe-west8.run.app/>
+
+The frontend is the public UI; the gateway exposes `/auth`, `/bookmark`,
+`/institute`, and `/workshop` routes. Individual backends are not publicly
+reachable in production.
+
+### Local services
+
+| Service        | URL                          |
+| -------------- | ---------------------------- |
+| Frontend       | <http://localhost:3000>      |
+| Gateway        | <http://localhost:8000>      |
+| Auth API docs  | <http://localhost:8001/docs> |
+| Bookmark docs  | <http://localhost:8002/docs> |
+| Institute docs | <http://localhost:8003/docs> |
+| Workshop docs  | <http://localhost:8004/docs> |
+| Grafana        | <http://localhost:5000>      |
+| Prometheus     | <http://localhost:9090>      |
+| Loki           | <http://localhost:3100>      |
+
+## Repository structure
+
+```text
+art-shop/
+├── auth/                       # Authentication service (users, JWT, roles)
+│   ├── app/                    # main.py, routers/, models/, database.py, cli.py
+│   ├── tests/                  # pytest suite
+│   ├── Dockerfile
+│   └── pyproject.toml
+├── bookmark/                   # Bookmark service (user/workshop pairs)
+│   └── app/, tests/, Dockerfile, pyproject.toml
+├── institute/                  # Institute service (professor-managed institutes)
+│   └── app/, tests/, Dockerfile, pyproject.toml
+├── workshop/                   # Workshop service (search, CRUD, geolocation)
+│   └── app/, tests/, Dockerfile, pyproject.toml
+├── gateway/                    # FastAPI reverse proxy and JWT identity injection
+│   └── app/main.py, app/utils.py, tests/, Dockerfile
+├── frontend/                   # Next.js App Router application
+│   ├── app/                    # Pages: workshops, institutes, auth, profile, bookmarks
+│   ├── components/             # Navbar, forms, filters, map picker, pagination
+│   ├── lib/                    # API client, auth helpers, contexts, models
+│   ├── public/                 # Static assets
+│   └── Dockerfile, package.json
+├── monitoring/                 # Grafana, Loki, Prometheus, Alloy configuration
+├── .github/workflows/          # CI tests, Docker build, Cloud Run deployment
+├── docker-compose.yaml         # Full local stack
+├── service.yaml                # Cloud Run multi-container API definition
+├── cloudbuild.yaml             # Backend image builds
+├── cloudbuild.frontend.yaml    # Frontend image build
+├── deploy.md                   # Deployment runbook
+└── README.md
+```
+
 ## Prerequisites
 
 - Docker Engine 24+ and Docker Compose v2
@@ -92,7 +195,7 @@ instance on an isolated network.
 ## Run the full stack
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/mardisen/art-shop
 cd art-shop
 docker compose up --build
 ```
@@ -118,35 +221,12 @@ Grafana is available at <http://localhost:5000> (anonymous admin access), with L
 and Prometheus provisioned as data sources. Alloy collects container logs and
 metrics from the Docker socket.
 
-## Local development
+### Run Individual service(s)
 
-Backend services read configuration from their own `.env`; Docker builds replace it
-with `.docker.env`. Start a service's database and Redis, then run it with `uv`:
-
-```bash
-# Example: Auth service
-SERVICE_NAME=auth docker compose -f auth/docker-compose.yaml up -d db redis
-cd auth
-uv sync
-uv run fastapi dev app/main.py --port 8001
-```
-
-Repeat for `bookmark` (port 8002, DB port 5434), `institute` (8003, DB port 5435),
-and `workshop` (8004). Run the gateway after the backends are up:
-
-```bash
-cd gateway
-uv sync
-uv run fastapi dev app/main.py --port 8000
-```
-
-The frontend defaults to `http://localhost:8000` for API calls:
-
-```bash
-cd frontend
-npm ci
-NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
-```
+For running individual services outside Docker, follow the instructions in their
+READMEs: [auth](auth/README.md), [bookmark](bookmark/README.md),
+[institute](institute/README.md), [workshop](workshop/README.md),
+[gateway](gateway/README.md), and [frontend](frontend/README.md).
 
 ## Tests and checks
 
