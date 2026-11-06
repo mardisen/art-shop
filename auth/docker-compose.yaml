@@ -65,7 +65,6 @@ networks:
   backend:
     name: artshop-$SERVICE_NAME-private
     driver: bridge
-    internal: true
   public:
     name: artshop-$SERVICE_NAME-public
     driver: bridge

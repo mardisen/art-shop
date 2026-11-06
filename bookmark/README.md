@@ -47,7 +47,11 @@ Add `-v` to also delete the database volume.
 
 ## Run locally with uv
 
-1. Start PostgreSQL and Redis:
+When the API runs with `uv` on the host, PostgreSQL and Redis must be reachable on
+published host ports. The service compose file starts both with the ports expected
+by `.env` (PostgreSQL `5434`, Redis `6379`).
+
+1. Start PostgreSQL and Redis from this directory:
 
    ```bash
    docker compose up -d db redis
@@ -59,10 +63,10 @@ Add `-v` to also delete the database volume.
    uv sync
    ```
 
-3. Seed the database (optional):
+3. Seed the database (optional, idempotent):
 
    ```bash
-   uv run python app/cli.py
+   uv run python -m app.cli
    ```
 
 4. Start the API on port `8002` (the port the gateway expects):
@@ -71,7 +75,10 @@ Add `-v` to also delete the database volume.
    uv run fastapi dev app/main.py --port 8002
    ```
 
-The local API is then available at http://localhost:8002 and its docs at http://localhost:8002/docs. Update `DATABASE_URL` and `REDIS_URL` in `.env` if your local ports differ.
+The local API is then available at http://localhost:8002 and its docs at
+http://localhost:8002/docs. If the full stack is already running from the repository
+root, stop it first (`docker compose down` at the root): its database and Redis are
+only on internal Docker networks and reuse the same container names.
 
 ## Tests
 

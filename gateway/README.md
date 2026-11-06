@@ -41,7 +41,9 @@ The container listens on http://localhost:8000. The bundled compose file starts 
 
 ## Run locally with uv
 
-For local development the simplest setup is to run the four backend services on ports `8001`-`8004` (see their READMEs), then start the gateway:
+The gateway only needs the four backend APIs reachable on `localhost`; it has no
+database or seed step. Start each backend following its README (each one publishes
+its PostgreSQL, Redis, and API ports on the host), then:
 
 1. Install the dependencies:
 
@@ -55,7 +57,9 @@ For local development the simplest setup is to run the four backend services on 
    uv run fastapi dev app/main.py --port 8000
    ```
 
-The gateway is then available at http://localhost:8000 and its docs at http://localhost:8000/docs. Its `.env` already points to the local service ports.
+The gateway is then available at http://localhost:8000 and its docs at
+http://localhost:8000/docs. Its `.env` already points to the local service ports
+`8001`-`8004`.
 
 ## Tests
 
