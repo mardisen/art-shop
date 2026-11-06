@@ -67,7 +67,7 @@ async def get_security_headers(headers: Headers):
     if not authorization:
         return return_headers
 
-    async with httpx2.AsyncClient(timeout=30.0) as client:
+    async with httpx2.AsyncClient(timeout=30.0, follow_redirects=True) as client:
         token_headers = {"authorization": authorization}
         response = await client.get(
             ServiceUrl.auth_url + "/auth/me", headers=token_headers
@@ -103,7 +103,7 @@ async def forward_request(request: Request):
     except JSONDecodeError:
         json = None
     form = await request.form()
-    async with httpx2.AsyncClient(timeout=30.0) as client:
+    async with httpx2.AsyncClient(timeout=30.0, follow_redirects=True, verify=False) as client:
         return await client.request(
             request.method,
             url,

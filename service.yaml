@@ -28,32 +28,73 @@ spec:
               value: "http://localhost:8003"
             - name: WORKSHOP_URL
               value: "http://localhost:8004"
+            - name: FRONTEND_URL
+              value: "https://frontend-204087020671.europe-west8.run.app"
+          startupProbe:
+            tcpSocket:
+              port: 80
+            periodSeconds: 5
+            failureThreshold: 60
         - name: auth
           image: europe-west8-docker.pkg.dev/artshop-second/artshop/auth:latest
           command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8001", "--host", "0.0.0.0"]
-          env:
+          env: &db-env
+            - name: DATABASE_ENGINE
+              value: "postgresql"
+            - name: DATABASE_USER
+              value: "example"
+            - name: DATABASE_PASSWORD
+              value: "example"
+            - name: DATABASE_SPACE
+              value: "fastapi"
             - name: DATABASE_URL
               value: "127.0.0.1:5432"
+            - name: REDIS_URL
+              value: "redis://localhost:6379/0"
+          startupProbe:
+            tcpSocket:
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
         - name: bookmark
           image: europe-west8-docker.pkg.dev/artshop-second/artshop/bookmark:latest
           command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8002", "--host", "0.0.0.0"]
-          env: [{ name: DATABASE_URL, value: "127.0.0.1:5432" }]
+          env: *db-env
+          startupProbe:
+            tcpSocket:
+              port: 8002
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
         - name: institute
           image: europe-west8-docker.pkg.dev/artshop-second/artshop/institute:latest
           command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8003", "--host", "0.0.0.0"]
-          env: [{ name: DATABASE_URL, value: "127.0.0.1:5432" }]
+          env: *db-env
+          startupProbe:
+            tcpSocket:
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
         - name: workshop
           image: europe-west8-docker.pkg.dev/artshop-second/artshop/workshop:latest
           command: ["/app/.venv/bin/fastapi", "run", "app/main.py", "--port", "8004", "--host", "0.0.0.0"]
-          env: [{ name: DATABASE_URL, value: "127.0.0.1:5432" }]
+          env: *db-env
+          startupProbe:
+            tcpSocket:
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
         - name: cloud-sql-proxy
           image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.26.3
-          args: ["--port=5432", "--address=0.0.0.0", "artshop-second:europe-west8:artshop-db"]
+          args: ["--address=0.0.0.0", "--port=5432", "artshop-second:europe-west8:artshop-db"]
           startupProbe:
             tcpSocket:
               port: 5432
             initialDelaySeconds: 5
-            periodSeconds: 10
+            periodSeconds: 5
             failureThreshold: 20
         - name: redis
           image: redis:7-alpine
@@ -61,5 +102,5 @@ spec:
             tcpSocket:
               port: 6379
             initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 19
+            periodSeconds: 5
+            failureThreshold: 20

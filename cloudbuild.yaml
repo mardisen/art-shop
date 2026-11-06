@@ -2,7 +2,6 @@ substitutions:
   _REGION: europe-west8
   _REPO: artshop
   _TAG: latest
-  _NEXT_PUBLIC_API_URL: http://localhost:8000
 
 options:
   logging: CLOUD_LOGGING_ONLY

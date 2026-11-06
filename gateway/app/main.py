@@ -11,16 +11,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "*"
-]
+origins = []
 
 frontend_url = getenv("FRONTEND_URL")
 if frontend_url:
     origins.append(frontend_url)
+else:
+    # Fallback to localhost if no frontend URL is provided for local development
+    origins.extend([
+        "http://localhost",
+        "http://localhost:8000",
+        "http://localhost:3000",
+    ])
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,8 +38,10 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.api_route("{path_name:path}", methods=["GET", "POST", "DELETE", "PUT"])
+@app.api_route("{path_name:path}", methods=["GET", "POST", "DELETE", "PUT", "OPTIONS"])
 async def route(request: Request):
+    if request.method == "OPTIONS":
+        return Response(status_code=200)
     try:
         response = await forward_request(request)
         return Response(status_code=response.status_code, content=response.content)
