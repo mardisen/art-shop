@@ -4,7 +4,15 @@ Platform for discovering and creating art workshops. It provides geolocation-bas
 search, user registration/login with JWT sessions, per-service HTTP caching, and a
 server-rendered frontend.
 
-## Functionalities
+**Live:** [Frontend](https://frontend-204087020671.europe-west8.run.app) ·
+[API gateway](https://artshop-204087020671.europe-west8.run.app)
+
+[![Run Tests](https://github.com/mardisen/art-shop/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/mardisen/art-shop/actions/workflows/tests.yml)
+[![Test build NextJS](https://github.com/mardisen/art-shop/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/mardisen/art-shop/actions/workflows/build.yml)
+[![Test build Docker](https://github.com/mardisen/art-shop/actions/workflows/docker.yml/badge.svg?branch=main)](https://github.com/mardisen/art-shop/actions/workflows/docker.yml)
+[![Deploy to Cloud Run](https://github.com/mardisen/art-shop/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/mardisen/art-shop/actions/workflows/deploy.yml)
+
+## 1. Functionalities
 
 - **Accounts and authentication** — registration and login, JWT access tokens,
   `Artist` and `Professor` roles, profile editing, and professor affiliation with
@@ -25,7 +33,7 @@ server-rendered frontend.
 - **Observability** — optional Grafana, Loki, Prometheus, and Alloy stack for
   container logs, metrics, and dashboards.
 
-## Use cases
+## 2. Use cases
 
 ### Artist
 
@@ -48,7 +56,7 @@ server-rendered frontend.
 
 Seeded demo accounts: `artist@example.com / artist` and `prof@example.com / prof`.
 
-## Architecture
+## 3. Architecture
 
 ```mermaid
 flowchart TB
@@ -127,7 +135,7 @@ instance on an isolated network.
 | Workshop  | 8004       | Workshop search and management       |
 | Grafana   | 5000       | Monitoring dashboards (optional)     |
 
-## Web services
+## 4. Web services
 
 ### Live deployment (Google Cloud Run)
 
@@ -153,7 +161,7 @@ reachable in production.
 | Prometheus     | <http://localhost:9090>      |
 | Loki           | <http://localhost:3100>      |
 
-## Repository structure
+## 5. Repository structure
 
 ```text
 art-shop/
@@ -186,13 +194,13 @@ art-shop/
 └── README.md
 ```
 
-## Prerequisites
+## 6. Prerequisites
 
 - Docker Engine 24+ and Docker Compose v2
 - `uv` (Python 3.14+) for running backend services and tests outside Docker
 - Node.js 20+ and npm for running the frontend outside Docker
 
-## Run the full stack
+## 7. Run the full stack
 
 ```bash
 git clone https://github.com/mardisen/art-shop
@@ -228,7 +236,7 @@ READMEs: [auth](auth/README.md), [bookmark](bookmark/README.md),
 [institute](institute/README.md), [workshop](workshop/README.md),
 [gateway](gateway/README.md), and [frontend](frontend/README.md).
 
-## Tests and checks
+## 8. Tests and checks
 
 Backend tests use pytest and can run per service:
 
@@ -247,7 +255,7 @@ npm run lint
 npm run build
 ```
 
-## Deployment
+## 9. Deployment
 
 Production deployment targets Google Cloud Run as a single multi-container service
 (`service.yaml`) plus a separately deployed frontend. Build and deploy with
