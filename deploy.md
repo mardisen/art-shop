@@ -36,8 +36,12 @@ export SA=artshop-run@${PROJECT_ID}.iam.gserviceaccount.com
 
 gcloud config set project "${PROJECT_ID}"
 gcloud services enable run.googleapis.com sqladmin.googleapis.com \
-  cloudbuild.googleapis.com artifactregistry.googleapis.com
+  cloudbuild.googleapis.com artifactregistry.googleapis.com \
+  cloudresourcemanager.googleapis.com
 ```
+
+`cloudresourcemanager.googleapis.com` is required by `gcloud projects describe`
+(used below and by the GitHub Actions workflow).
 
 ## 1. IAM
 
@@ -185,6 +189,11 @@ One-time setup:
 ```bash
 export PROJECT_ID=artshop-second
 export GITHUB_REPO=OWNER/REPO
+
+# Required by `gcloud projects describe` and Workload Identity Federation.
+gcloud services enable cloudresourcemanager.googleapis.com \
+  iam.googleapis.com iamcredentials.googleapis.com --project="${PROJECT_ID}"
+
 export PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')
 export DEPLOY_SA=github-deploy@${PROJECT_ID}.iam.gserviceaccount.com
 
@@ -228,6 +237,7 @@ Repository secrets (**Settings → Secrets and variables → Actions**):
 | Container config rejected (`dependsOn`/probes) | Using `dependsOn` | Use `container-dependencies` + `startupProbe` |
 | Frontend calls `localhost:8000` | Built without `_NEXT_PUBLIC_API_URL` | Rebuild with `API_URL` |
 | CORS errors | Gateway missing `FRONTEND_URL` | Set it, new revision |
+| `Cloud Resource Manager API has not been used ... or it is disabled` | API not enabled | `gcloud services enable cloudresourcemanager.googleapis.com` |
 
 ## Teardown
 
