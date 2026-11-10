@@ -60,6 +60,30 @@ def test_register_success(client):
     assert "password" not in body
 
 
+def test_register_professor_with_institute(client):
+    resp = register(client, role="Professor", institute_id=7)
+    assert resp.status_code == 201
+    login = client.post(
+        "/auth/login",
+        data={"username": "user@example.com", "password": "secret123"},
+    )
+    token = login.json()["access_token"]
+    me = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me.json()["institute_id"] == 7
+
+
+def test_register_artist_ignores_institute(client):
+    resp = register(client, role="Artist", institute_id=7)
+    assert resp.status_code == 201
+    login = client.post(
+        "/auth/login",
+        data={"username": "user@example.com", "password": "secret123"},
+    )
+    token = login.json()["access_token"]
+    me = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert "institute_id" not in me.json()
+
+
 def test_register_duplicate_email(client):
     register(client)
     resp = register(client, name="Bob")

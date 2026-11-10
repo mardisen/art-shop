@@ -1,57 +1,19 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/auth";
-import { WorkshopFull } from "@/lib/models";
+import { Institute, WorkshopFull } from "@/lib/models";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-export default function WorkshopDetailPage() {
-    const params = useParams();
-    const id = params?.id;
-    const [workshop, setWorkshop] = useState<WorkshopFull | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [institute, setInstitute] = useState<any>(null);
+export default async function WorkshopDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const res = await apiFetch(`/workshop/${id}`, { cache: "no-store" });
+    if (!res.ok) notFound();
 
-    useEffect(() => {
-        async function load() {
-            if (!id) return;
-            const res = await apiFetch(`/workshop/${id}`, { cache: "no-store" });
-            if (!res.ok) {
-                setError("Workshop not found");
-                setLoading(false);
-                return;
-            }
-            const data = await res.json();
-            setWorkshop(data);
-            if (data.institute_id) {
-                try {
-                    const ires = await apiFetch(`/institute/${data.institute_id}`, { cache: "no-store" });
-                    if (ires.ok) {
-                        setInstitute(await ires.json());
-                    }
-                } catch {}
-            }
-            setLoading(false);
-        }
-        load();
-    }, [id]);
+    const workshop = (await res.json()) as WorkshopFull;
 
-    if (loading) {
-        return (
-            <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-                <p>Loading...</p>
-            </div>
-        );
-    }
-
-    if (!workshop) {
-        return (
-            <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-                <p>{error || "Workshop not found"}</p>
-            </div>
-        );
+    let institute: Institute | null = null;
+    if (workshop.institute_id) {
+        const ires = await apiFetch(`/institute/${workshop.institute_id}`, { cache: "no-store" });
+        if (ires.ok) institute = (await ires.json()) as Institute;
     }
 
     return (
