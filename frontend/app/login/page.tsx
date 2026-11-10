@@ -44,10 +44,10 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
+        <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto bg-zinc-50 px-4 py-8 dark:bg-black">
             <form
                 onSubmit={onSubmit}
-                className="w-full max-w-sm space-y-4 rounded-xl bg-white p-8 shadow dark:bg-zinc-900"
+                className="m-auto w-full max-w-sm space-y-4 rounded-xl bg-white p-8 shadow dark:bg-zinc-900"
             >
                 <h1 className="text-2xl font-semibold">Log in</h1>
                 {error && (
@@ -55,7 +55,7 @@ export default function LoginPage() {
                         {error}
                     </p>
                 )}
-                <FormField label="Username" name="username" />
+                <FormField label="Email" name="username" />
                 <FormField label="Password" name="password" type="password" />
                 <Button type="submit" loading={loading} loadingText="Logging in">
                     Log in

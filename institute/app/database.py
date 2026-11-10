@@ -2,7 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session, SQLModel
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from app.utils import create_db_connection_string
 from app.models.institute import Institute
 
@@ -38,6 +38,21 @@ def seed_db():
                     session.commit()
                 except IntegrityError:
                     session.rollback()
+        _reset_sequences(session)
+
+
+def _reset_sequences(session: Session):
+    if engine.dialect.name != "postgresql":
+        return
+    for values in test_data.values():
+        table = values[0].__tablename__
+        session.execute(
+            text(
+                f"SELECT setval(pg_get_serial_sequence('\"{table}\"', 'id'), "
+                f"COALESCE((SELECT MAX(id) FROM \"{table}\"), 0) + 1, false)"
+            )
+        )
+    session.commit()
 
 
 def create_db_and_tables():

@@ -1,49 +1,15 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/auth";
+import { Institute } from "@/lib/models";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { BackButton } from "@/components/BackButton";
 
-export default function InstituteDetailPage() {
-    const params = useParams();
-    const router = useRouter();
-    const id = params?.id;
-    const [institute, setInstitute] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+export default async function InstituteDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const res = await apiFetch(`/institute/${id}`, { cache: "no-store" });
+    if (!res.ok) notFound();
 
-    useEffect(() => {
-        async function load() {
-            if (!id) return;
-            const res = await apiFetch(`/institute/${id}`, { cache: "no-store" });
-            if (!res.ok) {
-                setError("Institute not found");
-                setLoading(false);
-                return;
-            }
-            const data = await res.json();
-            setInstitute(data);
-            setLoading(false);
-        }
-        load();
-    }, [id]);
-
-    if (loading) {
-        return (
-            <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-                <p>Loading...</p>
-            </div>
-        );
-    }
-
-    if (!institute) {
-        return (
-            <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-                <p>{error || "Institute not found"}</p>
-            </div>
-        );
-    }
+    const institute = (await res.json()) as Institute;
 
     return (
         <div className="flex min-h-0 flex-1 flex-col bg-zinc-50 px-4 py-8 dark:bg-black">
@@ -62,9 +28,7 @@ export default function InstituteDetailPage() {
                     </Link>
                 )}
                 <div>
-                    <button className="text-sm underline hover:cursor-pointer" onClick={() => router.back()}>
-                        Back
-                    </button>
+                    <BackButton />
                 </div>
             </div>
         </div>

@@ -1,30 +1,21 @@
-"use client";
-
 import Link from "next/link";
 import { BookmarkButton } from "@/components/BookmarkButton";
+import { DeleteWorkshopButton } from "@/components/DeleteWorkshopButton";
 import { WorkshopFull } from "@/lib/models";
-import { useContext, useState } from "react";
-import { UserContext } from "@/lib/providers";
-import { apiFetch } from "@/lib/auth";
 
-export function WorkshopListItem({ workshop, showDelete = false, showEdit = false, showBookmark = true }: { workshop: WorkshopFull; showDelete?: boolean; showEdit?: boolean; showBookmark?: boolean }) {
-    const userContext = useContext(UserContext);
-    const user = (userContext as any).user ?? (userContext as any);
-    const [deleting, setDeleting] = useState(false);
-    const [hidden, setHidden] = useState(false);
-
-    async function onDelete() {
-        if (!confirm("Delete this workshop?")) return;
-        setDeleting(true);
-        const res = await apiFetch(`/workshop/${workshop.id}`, { method: "DELETE" });
-        if (res.ok) {
-            setHidden(true);
-        }
-        setDeleting(false);
-    }
-
-    if (hidden) return null;
-
+export function WorkshopListItem({
+    workshop,
+    showDelete = false,
+    showEdit = false,
+    showBookmark = true,
+    canManage = false,
+}: {
+    workshop: WorkshopFull;
+    showDelete?: boolean;
+    showEdit?: boolean;
+    showBookmark?: boolean;
+    canManage?: boolean;
+}) {
     return (
         <li className="py-4">
             <div className="flex items-center justify-between">
@@ -33,18 +24,14 @@ export function WorkshopListItem({ workshop, showDelete = false, showEdit = fals
                 </Link>
                 <div className="flex items-center gap-2">
                     {showBookmark && <BookmarkButton workshopId={workshop.id} />}
-                    {workshop.created_by && user?.id && workshop.created_by === user.id && (
+                    {canManage && (
                         <>
                             {showEdit && (
                                 <Link href={`/workshops/${workshop.id}/edit`} className="text-sm underline">
                                     Edit
                                 </Link>
                             )}
-                            {showDelete && (
-                                <button onClick={onDelete} disabled={deleting} className="text-sm text-red-600 underline">
-                                    {deleting ? "Deleting" : "Delete"}
-                                </button>
-                            )}
+                            {showDelete && <DeleteWorkshopButton workshopId={workshop.id} />}
                         </>
                     )}
                 </div>

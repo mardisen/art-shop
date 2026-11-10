@@ -91,6 +91,7 @@ def register(user_data: UserCreate, session: SessionDep):
         name=user_data.name,
         surname=user_data.surname,
         role=user_data.role,
+        institute_id=user_data.institute_id if user_data.role == Role.Professor else None,
         password=hash_password(user_data.password),
     )
     session.add(user)

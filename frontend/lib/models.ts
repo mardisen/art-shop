@@ -29,3 +29,11 @@ export interface User {
     role: Role;
     institute_id: number | null;
 }
+
+export interface Institute {
+    id: number;
+    name: string;
+    address: string;
+    link: string | null;
+    description: string | null;
+}

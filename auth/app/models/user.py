@@ -37,6 +37,7 @@ class UserCreate(BaseModel):
     surname: str
     password: str
     role: Role
+    institute_id: int | None = None
 
 
 class UserResponse(BaseModel):
